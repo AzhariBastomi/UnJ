@@ -1,0 +1,192 @@
+{
+  "_dialog": {
+    "title": "Commissioning Settings",
+    "tabs": [
+      {
+        "label": "LoRa Keys",
+        "sections": [
+          {
+            "fields": [
+              {
+                "key": "lora_set_dev_eui.dev_eui",
+                "label": "DevEUI",
+                "type": "hex",
+                "bytes": 8
+              },
+              {
+                "key": "lora_set_join_eui.join_eui",
+                "label": "JoinEUI",
+                "type": "hex",
+                "bytes": 8
+              },
+              {
+                "key": "lora_set_app_key.app_key",
+                "label": "AppKey",
+                "type": "hex",
+                "bytes": 16
+              },
+              {
+                "key": "lora_set_nw_key.nw_key",
+                "label": "NwKey (ABP)",
+                "type": "hex",
+                "bytes": 16
+              },
+              {
+                "key": "lora_set_dev_addr.dev_addr",
+                "label": "DevAddr (ABP)",
+                "type": "hex_addr",
+                "bytes": 4
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "label": "LoRa Settings",
+        "sections": [
+          {
+            "fields": [
+              {
+                "key": "lora_set_join_mode.join_mode",
+                "label": "Join Mode",
+                "type": "select",
+                "options": [
+                  "None",
+                  "ABP",
+                  "OTAA"
+                ]
+              },
+              {
+                "key": "lora_set_dev_class.dev_class",
+                "label": "Device Class",
+                "type": "select",
+                "options": [
+                  "Class A",
+                  "Class B",
+                  "Class C"
+                ]
+              },
+              {
+                "key": "lora_set_config.tx_power",
+                "label": "TX Power",
+                "type": "number"
+              },
+              {
+                "key": "lora_set_config.data_rate",
+                "label": "Data Rate",
+                "type": "number"
+              },
+              {
+                "key": "lora_set_config.rx1_delay",
+                "label": "RX1 Delay (s)",
+                "type": "number"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "label": "User Config",
+        "sections": [
+          {
+            "fields": [
+              {
+                "key": "user_set_config.counter_res",
+                "label": "Counter Res",
+                "type": "select",
+                "options": [
+                  "1 L",
+                  "10 L",
+                  "100 L"
+                ]
+              },
+              {
+                "key": "user_set_config.submit_id",
+                "label": "Submit Rate",
+                "type": "select",
+                "options": [
+                  "15 menit",
+                  "30 menit",
+                  "1 jam",
+                  "3 jam",
+                  "12 jam",
+                  "1 hari",
+                  "3 hari",
+                  "7 hari"
+                ]
+              },
+              {
+                "key": "user_set_config.msg_type",
+                "label": "Message Type",
+                "type": "select",
+                "options": [
+                  "Unconfirmed",
+                  "Confirmed"
+                ]
+              },
+              {
+                "key": "user_set_config.timezone",
+                "label": "Timezone",
+                "type": "timezone"
+              },
+              {
+                "key": "user_set_config.initial_counter",
+                "label": "Initial Counter",
+                "type": "number"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "_doc": "Parameter commissioning per batch produksi.",
+  "set_id": {
+    "_doc": "Device ID dari field UI",
+    "device_id": "@device_id"
+  },
+  "lora_set_join_mode": {
+    "_doc": "0=None,1=ABP,2=OTAA",
+    "join_mode": 2
+  },
+  "lora_set_dev_class": {
+    "_doc": "0=ClassA,1=ClassB,2=ClassC",
+    "dev_class": 0
+  },
+  "lora_set_dev_eui": {
+    "_doc": "8 bytes hex, unik per device",
+    "dev_eui": "0080E10101010169"
+  },
+  "lora_set_join_eui": {
+    "_doc": "8 bytes hex, sama per batch",
+    "join_eui": "FFFFFFFFFFFFFFFF"
+  },
+  "lora_set_app_key": {
+    "_doc": "16 bytes hex, OTAA",
+    "app_key": "8833E75406D203F48D1F6D2CCC2815D8"
+  },
+  "lora_set_nw_key": {
+    "_doc": "16 bytes hex, ABP NwkSKey",
+    "nw_key": "8833E75406D203F48D1F6D2CCC2815D8"
+  },
+  "lora_set_dev_addr": {
+    "_doc": "hex string 4-byte, ABP",
+    "dev_addr": "0x0100000B"
+  },
+  "lora_set_config": {
+    "_doc": "tx_power/data_rate/rx1_delay",
+    "tx_power": 0,
+    "data_rate": 0,
+    "rx1_delay": 5
+  },
+  "user_set_config": {
+    "_doc": "counter_res/submit_id/timezone/msg_type",
+    "activation": 1,
+    "initial_counter": 80704,
+    "counter_res": 1,
+    "alarm": 0,
+    "submit_id": 2,
+    "timezone": 7,
+    "msg_type": 1
+  }
+}

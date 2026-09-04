@@ -1,0 +1,66 @@
+{
+  "label": "TM81 Join",
+  "connection": "ch340",
+  "tests": [
+    {
+      "_section": "── 1. Reset & Baca Config ───────────────────────────────────",
+      "name": "user_reset_config",
+      "label": "User Reset Config",
+      "command_class": "commands.tm81.user_reset_config.UserResetConfig",
+      "description": "Reset konfigurasi user ke default"
+    },
+    {
+      "name": "user_get_config",
+      "label": "Get User Config",
+      "command_class": "commands.tm81.user_get_config.UserGetConfig",
+      "description": "Baca konfigurasi user setelah reset — cek Activation harus Deactivated",
+      "expect": {
+        "Activation": "Deactivated"
+      }
+    },
+    {
+      "_section": "── 2. RTC ───────────────────────────────────────────────────",
+      "name": "rtc_set",
+      "label": "Set RTC",
+      "command_class": "commands.tm81.rtc_set_time.RtcSetTime",
+      "description": "Sinkronisasi RTC device ke waktu PC"
+    },
+    {
+      "name": "rtc_get",
+      "label": "Get RTC Time",
+      "command_class": "commands.tm81.rtc_get_time.RtcGetTime",
+      "description": "Baca waktu RTC dari device - validasi rtc_set"
+    },
+    {
+      "_section": "── 3. Sensor ────────────────────────────────────────────────",
+      "name": "sensor_data",
+      "label": "Get Sensor Data",
+      "command_class": "commands.tm81.sensor_get_data.SensorGetData",
+      "description": "Baca data mentah sensor",
+      "disabled": false
+    },
+    {
+      "name": "sensor_calibration",
+      "label": "Sensor Calibration",
+      "command_class": "commands.tm81.sensor_calibration.SensorCalibration",
+      "description": "Kalibrasi sensor",
+      "no_retry": true,
+      "disabled": false
+    },
+    {
+      "_section": "── 4. Set Config & Info ─────────────────────────────────────",
+      "name": "user_set_config",
+      "label": "Set User Config",
+      "command_class": "commands.tm81.user_set_config.UserSetConfig",
+      "description": "Set konfigurasi user (activation, counter, alarm, submit rate, timezone, msg type)",
+      "disabled": false
+    },
+    {
+      "name": "dev_info",
+      "label": "Get Device Info",
+      "command_class": "commands.tm81.dev_get_info.DevGetInfo",
+      "description": "Baca info device: baterai, sensor, LoRa status",
+      "disabled": false
+    }
+  ]
+}

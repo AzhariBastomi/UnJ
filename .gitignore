@@ -1,0 +1,54 @@
+# ── Virtual environment ──────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+
+# ── Python cache (tidak perlu di-repo, di-generate otomatis) ─────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# ── Binary / firmware (ukuran besar) ─────────────────────────────────────────
+file_flash_fota/
+*.bin
+*.hex
+*.elf
+
+# ── STLink tools binary ───────────────────────────────────────────────────────
+stlink/
+
+# ── Commissioning (konfigurasi per-batch, sensitif) ──────────────────────────
+json/commissioning.json
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.iml
+*.suo
+*.user
+
+# ── Script lokal (tidak perlu di-repo) ───────────────────────────────────────
+git_commit.bat
+card
+
+# ── State lokal (di-generate otomatis saat app jalan) ────────────────────────
+tasks.json
+
+# ── Database lokal (di-generate oleh server/app.py) ─────────────────────────
+server/jig.db
+server/jig.db-shm
+server/jig.db-wal
+
+# ── Log & temp ────────────────────────────────────────────────────────────────
+*.log
+*.tmp
+*.bak
+*.swp
+
+# ── Build / dist ─────────────────────�

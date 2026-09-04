@@ -1,0 +1,66 @@
+{
+  "serial": {
+    "connections": {
+      "stlink": {
+        "device_name": "STLink",
+        "baudrate": 115200,
+        "timeout": 2.0,
+        "description": "STLink Virtual COM (debug / flash)",
+        "debug_rx": true,
+        "parser": "raw"
+      },
+      "uart": {
+        "device_name": "USB Serial",
+        "baudrate": 115200,
+        "timeout": 2.0,
+        "description": "UART device (komunikasi test)"
+      },
+      "ch340": {
+        "device_name": "USB-SERIAL CH340",
+        "baudrate": 9600,
+        "timeout": 2.0,
+        "description": "CH340 IrDA adapter (TM81)",
+        "parser": "tm81",
+        "crc_type": "crc32mpeg2",
+        "crc_bytes": 4,
+        "crc_bigend": false
+      },
+      "bluetooth": {
+        "device_name": "BEXA",
+        "baudrate": 921600,
+        "timeout": 5.0,
+        "description": "BEXA — Bluetooth Classic SPP (pasangkan dulu, COM muncul otomatis)",
+        "port_windows": "COM4",
+        "port_linux": "/dev/rfcomm0",
+        "parser": "raw"
+      }
+    },
+    "default": "uart"
+  },
+  "workflow": {
+    "_doc": "Pengaturan alur pengujian sequential",
+    "test_delay_ms": 5000,
+    "max_retries": 3,
+    "retry_delay_ms": 1000
+  },
+  "keepalive": {
+    "_doc": "Ping TM81 secara periodik agar device tidak masuk mode sleep",
+    "enabled": true,
+    "interval_ms": 5000,
+    "connection": "ch340",
+    "log_tx_rx": false
+  },
+
+  "database": {
+    "_doc": "Upload hasil test ke server Flask. Set enabled: 0 untuk matikan (tidak ada koneksi ke localhost).",
+    "enabled": 0,
+    "server_url": "http://localhost:5001"
+  },
+
+  "debug": {
+    "_doc": "Debug console. enabled: 1 = buka window saat startup. windows: pilih dari [all, serial_comm, commands, flash, test_loader].",
+    "enabled": 1,
+    "level": "DEBUG",
+    "windows": []
+  }
+}

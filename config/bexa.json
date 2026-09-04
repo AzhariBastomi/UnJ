@@ -1,0 +1,19 @@
+{
+  "_dialog": {
+    "title": "BEXA Settings",
+    "sections": [{
+      "label": "Bluetooth SPP — Koneksi Serial",
+      "note": "Pasangkan BEXA via Bluetooth terlebih dahulu, lalu isi COM port yang muncul di Device Manager.",
+      "fields": [
+        {"key": "device_name",  "label": "Nama device (auto-scan)", "type": "text"},
+        {"key": "port_windows", "label": "Port (Windows)", "type": "port"},
+        {"key": "port_linux",   "label": "Port (Linux)",   "type": "text"},
+        {"key": "baudrate",     "label": "Baudrate",       "type": "number"}
+      ]
+    }]
+  },
+  "device_name": "BEXA",
+  "port_windows": "COM4",
+  "port_linux": "/dev/rfcomm0",
+  "baudrate": 921600
+}

@@ -1,0 +1,6 @@
+{
+  "name":        "1v8",
+  "label":       "1.8V",
+  "command":     "VOLT_1V8",
+  "description": "Cek tegangan 1.8V"
+}

@@ -1,0 +1,142 @@
+{
+  "_doc": "Konfigurasi test suite BEXA via Bluetooth SPP (FTM Frame: header 0x0E, CRC16 KERMIT).",
+  "label": "BEXA",
+  "connection": "bluetooth",
+
+  "tests": [
+
+    {
+      "_section": "── Device Config ────────────────────────────────────────────",
+      "name":          "config_request",
+      "label":         "Config Request",
+      "command_class": "commands.bexa.cmd_config.ConfigRequest",
+      "description":   "Baca konfigurasi device: sensor rows/cols, versi, status semua peripheral"
+    },
+    {
+      "name":          "battery_request",
+      "label":         "Battery Status",
+      "command_class": "commands.bexa.cmd_config.BatteryRequest",
+      "description":   "Baca status charging dan level baterai"
+    },
+
+    {
+      "_section": "── FTM Get Info ─────────────────────────────────────────────",
+      "name":          "get_bt_info",
+      "label":         "Get Bluetooth Info",
+      "command_class": "commands.bexa.ftm_get_info.GetBluetoothInfo",
+      "description":   "FTM 0x00 — Baca info Bluetooth (MAC, versi) via DEBUG UART"
+    },
+    {
+      "name":          "get_tactile_info",
+      "label":         "Get Tactile Sensor Info",
+      "command_class": "commands.bexa.ftm_get_info.GetTactileInfo",
+      "description":   "FTM 0x01 — Baca info Tactile Sensor via DEBUG UART"
+    },
+    {
+      "name":          "get_haptic_info",
+      "label":         "Get Haptic Info",
+      "command_class": "commands.bexa.ftm_get_info.GetHapticInfo",
+      "description":   "FTM 0x02 — Baca info Haptic Motor via DEBUG UART"
+    },
+    {
+      "name":          "get_coulomb_info",
+      "label":         "Get Coulomb Counter Info",
+      "command_class": "commands.bexa.ftm_get_info.GetCoulombInfo",
+      "description":   "FTM 0x03 — Baca info Coulomb Counter via DEBUG UART"
+    },
+
+    {
+      "_section": "── FTM Sensor Read ──────────────────────────────────────────",
+      "name":          "tactile_read",
+      "label":         "Tactile Sensor Read",
+      "command_class": "commands.bexa.ftm_sensor.TactileSensorRead",
+      "description":   "FTM 0x05 — Baca data mentah Tactile Sensor"
+    },
+    {
+      "name":          "coulomb_read",
+      "label":         "Coulomb Counter Read",
+      "command_class": "commands.bexa.ftm_sensor.CoulombCounterRead",
+      "description":   "FTM 0x07 — Baca ACR, Voltage, dan Temperature dari Coulomb Counter"
+    },
+    {
+      "name":          "imu_read",
+      "label":         "IMU Read",
+      "command_class": "commands.bexa.ftm_sensor.ImuRead",
+      "description":   "FTM 0x0C — Baca data Accelerometer + Gyroscope"
+    },
+    {
+      "name":          "charging_info",
+      "label":         "Charging Info",
+      "command_class": "commands.bexa.ftm_sensor.ChargingInfo",
+      "description":   "FTM 0x0F — Baca status charging dan info daya"
+    },
+
+    {
+      "_section": "── FTM Actuator (Verifikasi Visual/Manual) ──────────────────",
+      "name":          "haptic_vibrating",
+      "label":         "Haptic Vibrating",
+      "command_class": "commands.bexa.ftm_actuator.HapticVibrating",
+      "description":   "FTM 0x06 — Haptic motor bergetar bergantian kiri dan kanan",
+      "type":          "manual"
+    },
+    {
+      "name":          "led_action_rgb",
+      "label":         "LED Action RGB",
+      "command_class": "commands.bexa.ftm_actuator.LedActionRgb",
+      "description":   "FTM 0x08 — LED Action berkedip Merah → Hijau → Biru",
+      "type":          "manual"
+    },
+    {
+      "name":          "led_power_rgb",
+      "label":         "LED Power RGB",
+      "command_class": "commands.bexa.ftm_actuator.LedPowerRgb",
+      "description":   "FTM 0x09 — LED Power berkedip Merah → Hijau → Biru",
+      "type":          "manual"
+    },
+    {
+      "name":          "lightbar_pulsing",
+      "label":         "Lightbar Pulsing",
+      "command_class": "commands.bexa.ftm_actuator.LightbarPulsing",
+      "description":   "FTM 0x0A — Lightbar pulsing dari 0 ke 8, kiri dan kanan",
+      "type":          "manual"
+    },
+    {
+      "name":          "buzzer_playing",
+      "label":         "Buzzer Playing",
+      "command_class": "commands.bexa.ftm_actuator.BuzzerPlaying",
+      "description":   "FTM 0x0B — Buzzer berbunyi",
+      "type":          "manual"
+    },
+
+    {
+      "_section": "── FTM System ───────────────────────────────────────────────",
+      "name":          "bt_rf_sig",
+      "label":         "Bluetooth RF Signal",
+      "command_class": "commands.bexa.ftm_system.BluetoothRfSig",
+      "description":   "FTM 0x0E — BT RF signal test"
+    },
+    {
+      "name":          "stop",
+      "label":         "Stop Test",
+      "command_class": "commands.bexa.ftm_system.Stop",
+      "description":   "FTM 0x11 — Hentikan semua test case yang sedang berjalan"
+    },
+
+    {
+      "_section": "── FTM Destruktif (gunakan hati-hati) ──────────────────────",
+      "name":          "bt_burst",
+      "label":         "Bluetooth Burst (FCC)",
+      "command_class": "commands.bexa.ftm_system.BluetoothBurst",
+      "description":   "FTM 0x04 — Connectionless FCC test. BT akan disconnect! Butuh spectrum analyzer",
+      "disabled":      true
+    },
+    {
+      "name":          "watchdog_reset",
+      "label":         "Watchdog Reset",
+      "command_class": "commands.bexa.ftm_system.WatchdogReset",
+      "description":   "FTM 0x0D — Reset watchdog timer (device mungkin restart)",
+      "disabled":      true
+    }
+
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "_doc": "Sesi Bootloader TM81 — masuk ke mode Bootloader, bersihkan metadata OTA di EEPROM, lalu baca uptime BL. Device harus dalam mode App saat memulai.",
+  "label": "TM81 Session BL",
+  "prefix": "tm81",
+  "connection": "ch340",
+  "_doc_tests": "Urutan: App→BL (reboot ke bootloader) → BL→App (validasi/soft reset ke App) → BL Clear OTA (reset metadata EEPROM) → Uptime Get (baca lama di mode BL).",
+  "tests": [
+    {
+      "_section": "── 1. Masuk Mode Bootloader ─────────────────────────────────",
+      "name": "app_goto_bl",
+      "label": "App Goto BL",
+      "command_class": "commands.tm81.app_goto_bl.AppGotoBL",
+      "type": "auto",
+      "description": "Reboot device dari App ke mode Bootloader (CMD 0x05, boot reason = IrDA OTA)",
+      "disabled": false
+    },
+    {
+      "_section": "── 2. Kembali ke App ────────────────────────────────────────",
+      "name": "bl_goto_app",
+      "label": "BL Goto App",
+      "command_class": "commands.tm81.bl_goto_app.BLGotoApp",
+      "type": "auto",
+      "description": "Validasi image lalu soft reset dari Bootloader kembali ke App (safety gate aktif — tolak jika image belum lengkap)",
+      "disabled": false
+    },
+    {
+      "_section": "── 3. Bersihkan Metadata OTA ────────────────────────────────",
+      "name": "bl_clear_ota",
+      "label": "BL Clear OTA",
+      "command_class": "commands.tm81.bl_clear_ota.BLClearOta",
+      "type": "auto",
+      "description": "Reset metadata OTA di EEPROM (fw_size=0, fw_crc=0, last_frame_id=0xFFFF) — CMD BL 107",
+      "disabled": false
+    },
+    {
+      "_section": "── 4. Baca Uptime ───────────────────────────────────────────",
+      "name": "uptime_get",
+      "label": "Get BL Uptime",
+      "command_class": "commands.tm81.uptime_get.UptimeGet",
+      "description": "Baca lama device di mode Bootloader + estimasi konsumsi (cmd 108)",
+      "disabled": false
+    }
+  ]
+}

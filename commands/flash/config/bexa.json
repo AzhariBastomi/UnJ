@@ -1,0 +1,50 @@
+{
+  "_dialog": {
+    "title": "Flash Settings — BEXA",
+    "sections": [
+      {
+        "dynamic_from": "tests",
+        "item_label": "label",
+        "item_key": "name",
+        "item_fields": [
+          {
+            "key": "file",
+            "label": "File",
+            "type": "firmware"
+          }
+        ]
+      }
+    ]
+  },
+  "label": "BEXA",
+  "prefix": "flash:bexa",
+  "tests": [
+    {
+      "name": "boot",
+      "label": "Bootloader",
+      "description": "Flash region bootloader BEXA",
+      "command_class": "tests.flash_test.FlashTest",
+      "address": "0x08000000",
+      "file": "",
+      "type": "progress"
+    },
+    {
+      "name": "app",
+      "label": "Application",
+      "description": "Flash region application BEXA",
+      "command_class": "tests.flash_test.FlashTest",
+      "address": "0x08010000",
+      "file": "",
+      "type": "progress"
+    },
+    {
+      "name": "sn",
+      "label": "Serial Number",
+      "description": "Flash region serial number BEXA",
+      "command_class": "tests.flash_test.FlashTest",
+      "address": "0x08008000",
+      "file": "",
+      "type": "progress"
+    }
+  ]
+}

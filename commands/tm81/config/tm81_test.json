@@ -1,0 +1,283 @@
+{
+  "label": "TM81",
+  "prefix": "tm81",
+  "connection": "ch340",
+  "tests": [
+    {
+      "_section": "── 1. Cek Versi Firmware ────────────────────────────────────",
+      "name": "get_version",
+      "label": "Get Firmware Version",
+      "command_class": "commands.tm81.user_get_version.UserGetVersion",
+      "description": "Baca versi App dan Bootloader - pastikan firmware benar sebelum commissioning"
+    },
+    {
+      "_section": "── 2. Set Device ID ─────────────────────────────────────────",
+      "name": "set_id",
+      "label": "Set Device ID",
+      "command_class": "commands.tm81.dev_set_id.DevSetId",
+      "description": "Tulis Device ID dari field UI ke device",
+      "params": {
+        "device_id": "@device_id"
+      },
+      "disabled": false,
+      "validate": {
+        "device_id": 1
+      }
+    },
+    {
+      "_section": "── 3. Set User Config ───────────────────────────────────────",
+      "name": "user_set_config",
+      "label": "Set User Config",
+      "command_class": "commands.tm81.user_set_config.UserSetConfig",
+      "description": "Set konfigurasi user (activation, counter, alarm, submit rate, timezone, msg type)",
+      "disabled": false,
+      "validate": {
+        "counter_res": 1,
+        "submit_id": 1,
+        "timezone": 1,
+        "msg_type": 1
+      }
+    },
+    {
+      "name": "user_synch_config",
+      "label": "Sync User Config",
+      "command_class": "commands.tm81.user_synch_config.UserSynchConfig",
+      "description": "Sinkronisasi user config ke device",
+      "disabled": false
+    },
+    {
+      "_section": "── 4. Set LoRa ──────────────────────────────────────────────",
+      "name": "lora_set_dev_eui",
+      "label": "Set DevEUI",
+      "command_class": "commands.tm81.lora_set_dev_eui.LoraSetDevEui",
+      "description": "Set DevEUI device (8 bytes)",
+      "disabled": false,
+      "validate": {
+        "dev_eui": 16
+      }
+    },
+    {
+      "name": "lora_set_join_eui",
+      "label": "Set JoinEUI",
+      "command_class": "commands.tm81.lora_set_join_eui.LoraSetJoinEui",
+      "description": "Set JoinEUI / AppEUI (8 bytes)",
+      "disabled": false,
+      "validate": {
+        "join_eui": 16
+      }
+    },
+    {
+      "name": "lora_set_app_key",
+      "label": "Set AppKey",
+      "command_class": "commands.tm81.lora_set_app_key.LoraSetAppKey",
+      "description": "Set AppKey LoRaWAN (16 bytes)",
+      "disabled": false,
+      "validate": {
+        "app_key": 32
+      }
+    },
+    {
+      "name": "lora_set_nw_key",
+      "label": "Set NwKey",
+      "command_class": "commands.tm81.lora_set_nw_key.LoraSetNwKey",
+      "description": "Set NwKey LoRaWAN (16 bytes)",
+      "disabled": false,
+      "validate": {
+        "nw_key": 32
+      }
+    },
+    {
+      "name": "lora_set_dev_addr",
+      "label": "Set DevAddr",
+      "command_class": "commands.tm81.lora_set_dev_addr.LoraSetDevAddr",
+      "description": "Set DevAddr ABP (4 bytes)",
+      "disabled": false,
+      "validate": {
+        "dev_addr": "nonzero_hex"
+      }
+    },
+    {
+      "name": "lora_set_join_mode",
+      "label": "Set Join Mode",
+      "command_class": "commands.tm81.lora_set_join_mode.LoraSetJoinMode",
+      "description": "Set LoRa join mode (0=None, 1=ABP, 2=OTAA)",
+      "disabled": false,
+      "validate": {
+        "join_mode": 1
+      }
+    },
+    {
+      "name": "lora_set_dev_class",
+      "label": "Set Device Class",
+      "command_class": "commands.tm81.lora_set_dev_class.LoraSetDevClass",
+      "description": "Set LoRa device class (0=A, 1=B, 2=C)",
+      "disabled": false,
+      "validate": {
+        "dev_class": 1
+      }
+    },
+    {
+      "name": "lora_set_config",
+      "label": "Set LoRa Config",
+      "command_class": "commands.tm81.lora_set_config.LoraSetConfig",
+      "description": "Set LoRa TX power, data rate, RX1 delay",
+      "disabled": false,
+      "validate": {
+        "tx_power": 1,
+        "data_rate": 1,
+        "rx1_delay": 1
+      }
+    },
+    {
+      "_section": "── 5. Set RTC ───────────────────────────────────────────────",
+      "name": "rtc_set",
+      "label": "Set RTC",
+      "command_class": "commands.tm81.rtc_set_time.RtcSetTime",
+      "description": "Sinkronisasi RTC device ke waktu PC"
+    },
+    {
+      "_section": "── 6. Get / Validasi ─────────────────────────────────────────",
+      "name": "get_id",
+      "label": "Get Device ID",
+      "command_class": "commands.tm81.dev_get_id.DevGetId",
+      "description": "Baca Device ID dari memori - validasi set_id",
+      "disabled": false
+    },
+    {
+      "name": "dev_info",
+      "label": "Get Device Info",
+      "command_class": "commands.tm81.dev_get_info.DevGetInfo",
+      "description": "Baca info device: baterai, sensor, LoRa status",
+      "disabled": false
+    },
+    {
+      "name": "uptime_get",
+      "label": "Get BL Uptime",
+      "command_class": "commands.tm81.uptime_get.UptimeGet",
+      "description": "Baca lama device di mode Bootloader + estimasi konsumsi (cmd 108)",
+      "disabled": false
+    },
+    {
+      "name": "rtc_get",
+      "label": "Get RTC Time",
+      "command_class": "commands.tm81.rtc_get_time.RtcGetTime",
+      "description": "Baca waktu RTC dari device - validasi rtc_set",
+      "disabled": false
+    },
+    {
+      "name": "user_get_config",
+      "label": "Get User Config",
+      "command_class": "commands.tm81.user_get_config.UserGetConfig",
+      "description": "Baca konfigurasi user — bandingkan dengan commissioning.json",
+      "disabled": false,
+      "expect": {
+        "Activation":  "@user_set_config.activation",
+        "Submit rate": "@user_set_config.submit_id",
+        "Counter res": "@user_set_config.counter_res",
+        "Timezone":    "@user_set_config.timezone",
+        "Msg type":    "@user_set_config.msg_type"
+      }
+    },
+    {
+      "name": "lora_get_config",
+      "label": "Get LoRa Config",
+      "command_class": "commands.tm81.lora_get_config.LoraGetConfig",
+      "description": "Baca konfigurasi LoRaWAN - validasi semua lora_set_*, update commissioning",
+      "disabled": false
+    },
+    {
+      "name": "lora_force_send",
+      "label": "LoRa Force Send",
+      "command_class": "commands.tm81.lora_force_send.LoraForceSend",
+      "description": "Paksa device kirim uplink LoRaWAN sekarang",
+      "disabled": false
+    },
+    {
+      "name": "lora_last_submit",
+      "label": "Get Last Submit Time",
+      "command_class": "commands.tm81.lora_get_last_submit_time.LoraGetLastSubmitTime",
+      "description": "Baca waktu terakhir device mengirim uplink",
+      "disabled": false
+    },
+    {
+      "_section": "── 7. Sensor ─────────────────────────────────────────────────",
+      "name": "sensor_do_get_config",
+      "label": "Sensor Trigger Config",
+      "command_class": "commands.tm81.sensor_do_get_config.SensorDoGetConfig",
+      "description": "Trigger satu siklus pembacaan sensor"
+    },
+    {
+      "name": "sensor_data",
+      "label": "Get Sensor Data",
+      "command_class": "commands.tm81.sensor_get_data.SensorGetData",
+      "description": "Baca data mentah sensor",
+      "disabled": false
+    },
+    {
+      "name": "user_last_usage",
+      "label": "Get Last Usage",
+      "command_class": "commands.tm81.user_last_usage.UserLastUsage",
+      "description": "Hitung last usage dari sensor pulse + initial counter",
+      "disabled": false
+    },
+    {
+      "name": "sensor_calibration",
+      "label": "Sensor Calibration",
+      "command_class": "commands.tm81.sensor_calibration.SensorCalibration",
+      "description": "Kalibrasi sensor",
+      "no_retry": true,
+      "disabled": false
+    },
+    {
+      "_section": "── 8. Backup & System ────────────────────────────────────────",
+      "name": "backup_write_usage",
+      "label": "Backup Write Usage",
+      "command_class": "commands.tm81.backup_write_usage.BackupWriteUsage",
+      "description": "Tulis usage history ke device",
+      "disabled": false
+    },
+    {
+      "name": "backup_read_usage",
+      "label": "Backup Read Usage",
+      "command_class": "commands.tm81.backup_read_usage.BackupReadUsage",
+      "description": "Baca usage history harian/bulanan dari device",
+      "disabled": true
+    },
+    {
+      "name": "mock_activation",
+      "label": "Mock Activation",
+      "command_class": "commands.tm81.mock_activation.MockActivation",
+      "description": "Sync RTC + set config + poll join/uplink (max 120s)",
+      "disabled": false
+    },
+    {
+      "name": "irda_disable",
+      "label": "IrDA Disable",
+      "command_class": "commands.tm81.irda_disable.IrdaDisable",
+      "description": "Nonaktifkan IrDA pada device",
+      "disabled": false
+    },
+    {
+      "name": "standby_mode",
+      "label": "Enter Standby Mode",
+      "command_class": "commands.tm81.standby_mode.StandbyMode",
+      "description": "Masukkan device ke mode standby",
+      "disabled": false
+    },
+    {
+      "name": "wdt_test",
+      "label": "WDT Test",
+      "command_class": "commands.tm81.wdt_test.WdtTest",
+      "description": "Test Watchdog Timer (device akan reset)",
+      "disabled": false
+    },
+    {
+      "_section": "── Ping (internal, dihandle KeepaliveManager) ───────────────",
+      "name": "ping",
+      "label": "Ping MCU",
+      "command_class": "commands.tm81.ping.Ping",
+      "description": "Dihandle otomatis oleh KeepaliveManager",
+      "disabled": true
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "_dialog": {
+    "title": "Flash Settings — TM81",
+    "sections": [
+      {
+        "dynamic_from": "tests",
+        "item_label": "label",
+        "item_key": "name",
+        "item_fields": [
+          {
+            "key": "file",
+            "label": "File",
+            "type": "firmware"
+          }
+        ]
+      }
+    ]
+  },
+  "label": "TM81",
+  "prefix": "flash:tm81",
+  "tests": [
+    {
+      "name": "boot",
+      "label": "Bootloader",
+      "description": "Flash region bootloader TM81",
+      "command_class": "tests.flash_test.FlashTest",
+      "address": "0x08000000",
+      "file": "C:\\Users\\basto\\Documents\\GitHub\\Universal-JIG\\firmware\\WaterMeter\\New folder\\SWM_KG200Z_Bootloader.bin",
+      "type": "progress"
+    },
+    {
+      "name": "app",
+      "label": "Application",
+      "description": "Flash region application TM81",
+      "command_class": "tests.flash_test.FlashTest",
+      "address": "0x08008000",
+      "file": "C:\\Users\\basto\\Documents\\GitHub\\Universal-JIG\\firmware\\WaterMeter\\New folder\\KG200Z_OPEN.bin",
+      "type": "progress"
+    }
+  ]
+}

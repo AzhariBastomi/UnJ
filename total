@@ -1,0 +1,1 @@
+- bl_write_firmware_v2.py: fix i  return OK (bukan NG offset error)
