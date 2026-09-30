@@ -199,6 +199,7 @@ class TM81Parser(BaseParser):
     ACK           = b"\x11"
     NAK           = b"\x0f"
     EOT           = b"\x04"
+    EOT_IRDA_OFF  = b"\xfe"   # EOT alternatif (balasan IRDA_DISABLE) — lihat SWM Serials.receive()
     HEADER_PREFIX = b"\x01\x0f"
 
     # Nama command TM81 untuk log TX yang lebih informatif
@@ -223,7 +224,7 @@ class TM81Parser(BaseParser):
         0x22: "SOFT_RESET",       0x23: "GET_LAST_SUBMIT",
         100:  "BL_SET_RDY",       101:  "BL_FW_DATA",
         102:  "BL_GOTO_APP",      106:  "BL_GET_OTA_PROGRESS",
-        107:  "BL_OTA_CLEAR",     108:  "BL_GET_UPTIME",
+        107:  "BL_OTA_CLEAR",     108:  "BL_GET_SESSION",
     }
 
     def __init__(self, crc_type: str = "crc32mpeg2",
@@ -252,7 +253,7 @@ class TM81Parser(BaseParser):
         """
         data_len  = len(data)
         total_len = 12 + data_len
-        if total_len <= 0xFF:
+        if total_len <= 0xFE:  # 0xFF direservasi sbg extended-length marker
             # Frame normal: cmd_len 1 byte
             cmd_bytes = (
                 b"\x01\x0f\x00"
@@ -351,7 +352,7 @@ class TM81Parser(BaseParser):
             return None   # belum lengkap, tunggu byte berikutnya
 
         frame = raw[:total_len]
-        if frame[-1:] != self.EOT:
+        if frame[-1:] not in (self.EOT, self.EOT_IRDA_OFF):
             # EOT tidak ada di posisi yang diharapkan -> LEN salah/frame korup.
             self._buf = bytearray(raw[1:])
             return None

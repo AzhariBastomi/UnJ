@@ -324,6 +324,13 @@ class FlasherBase:
 class Stm32Config:
     stlink_bin:  str   = ""              # kosong = auto-detect via stlink_path
     reset:       bool  = True            # Reset setelah flash
+    reset_mode:  str   = "software"      # "software" -> connect mode=NORMAL reset=SWrst (default
+                                          # lama, tidak berubah) atau "hardware" -> connect mode=UR
+                                          # reset=HWrst (connect-under-reset, reset fisik via
+                                          # SWD/JTAG -- setara opsi "Hardware reset" di
+                                          # STM32CubeProgrammer GUI). Hanya berlaku di Windows
+                                          # (STM32_Programmer_CLI); di Linux (st-flash) tidak ada
+                                          # pembedaan ini.
     flash_addr:  str   = "0x08000000"    # Alamat flash STM32
     format:      str   = "binary"        # binary / ihex
     extra_flags: list  = field(default_factory=list)
@@ -363,16 +370,30 @@ class Stm32Flasher(FlasherBase):
         ext = os.path.splitext(firmware_path)[1].lower()
 
         if is_windows:
-            # STM32_Programmer_CLI.exe -c port=SWD -w "<file>" <addr> -v -rst
+            # reset_mode dipilih lewat parameter connect "-c ... reset=<mode>",
+            # BUKAN flag -rst/-hardRst terpisah -- ini yang menentukan gimana
+            # STM32_Programmer_CLI konek ke chip:
+            #   software -> mode=NORMAL reset=SWrst  (default lama, tidak berubah)
+            #   hardware -> mode=UR     reset=HWrst  (connect-under-reset, reset fisik)
+            # Contoh persis dari STM32CubeProgrammer:
+            #   -c port=SWD freq=4000 mode=NORMAL ap=0 reset=SWrst
+            #   -c port=SWD freq=4000 mode=UR ap=0 reset=HWrst
+            if self.cfg.reset_mode == "hardware":
+                connect_params = ["port=SWD", "freq=4000", "mode=UR", "ap=0", "reset=HWrst"]
+            else:
+                connect_params = ["port=SWD", "freq=4000", "mode=NORMAL", "ap=0", "reset=SWrst"]
+            # Tiap param jadi argv terpisah (bukan digabung 1 string) -- _run()
+            # jalankan subprocess pakai list argv langsung, tanpa shell yang
+            # biasa mem-tokenize spasi seperti waktu diketik manual di terminal.
             cmd = [
                 tool,
-                "-c", "port=SWD",
+                "-c", *connect_params,
                 "-w", firmware_path, self.cfg.flash_addr,
                 "-v",
                 *self.cfg.extra_flags,
             ]
             if self.cfg.reset:
-                cmd.append("-rst")
+                cmd.append("-rst")   # reset/jalankan app setelah selesai flash
             return self._run(cmd, progress_cb)
 
         # Linux: st-flash
@@ -399,3 +420,47 @@ class Stm32Flasher(FlasherBase):
             subprocess.run([tool, "reset"], capture_output=True)
 
         return result
+
+
+# ---------------------------------------------------------------------------
+# Reset device (tanpa flashing) — dipakai standalone, mis. verifikasi config
+# tersimpan di EEPROM/Flash bertahan setelah device benar-benar direset via
+# debugger (bukan cuma soft-reboot lewat command serial).
+# ---------------------------------------------------------------------------
+
+def reset_device() -> FlashResult:
+    """
+    Reset device via ST-Link, TANPA menulis firmware apa pun.
+
+    Windows : STM32_Programmer_CLI.exe -c port=SWD -rst
+    Linux   : st-flash reset
+
+    Tool di-detect otomatis via stlink_path.find_flash_tool() — sama seperti
+    yang dipakai Stm32Flasher untuk flashing.
+    """
+    try:
+        from stlink_path import find_flash_tool
+        tool = find_flash_tool()
+    except FileNotFoundError as e:
+        return FlashResult(ok=False, message=str(e))
+
+    if sys.platform == "win32":
+        cmd = [tool, "-c", "port=SWD", "-rst"]
+    else:
+        cmd = [tool, "reset"]
+
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+    except Exception as e:
+        return FlashResult(ok=False, message=f"Reset gagal: {e}")
+
+    if proc.returncode == 0:
+        return FlashResult(ok=True, message="Reset device berhasil",
+                            stdout=proc.stdout or "", stderr=proc.stderr or "")
+
+    err = (proc.stderr or proc.stdout or "").strip()
+    return FlashResult(
+        ok=False,
+        message=f"Reset device gagal (exit {proc.returncode}): {err}",
+        stdout=proc.stdout or "", stderr=proc.stderr or "",
+    )

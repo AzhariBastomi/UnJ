@@ -1,0 +1,304 @@
+{
+  "_doc": "Step library TM81 — definisi kanonik tiap step, dipakai bersama semua suite di folder ini. File berawalan '_' tidak dianggap suite oleh loader.",
+  "_doc_format": [
+    "Suite merujuk step lewat field \"steps\". Konvensi proyek: SETIAP elemen ditulis",
+    "sebagai objek dengan bentuk yang sama, minimal use + description.",
+    "  {\"use\": \"nama_step\", \"description\": \"...\"}",
+    "  {\"use\": \"varian\", \"name\": \"x\", ...}   -> varian, nama step tetap x",
+    "  {\"name\": ..., \"command_class\": ...}     -> entry inline, tidak lewat library",
+    "Set sebuah field ke null di override untuk membuang bawaan library.",
+    "",
+    "Pembagian tanggung jawab:",
+    "  _steps.json (di sini) = CARA menjalankan step — label, command_class, type,",
+    "                          progress, no_retry, popup operator, params, validate.",
+    "  suite                 = MAKSUD step di flow itu — description, expect.",
+    "description tampil di UI sebagai subjudul di bawah nama test (test_row_widget),",
+    "dan bunyinya beda-beda per suite, jadi ditulis di suite bukan di sini.",
+    "",
+    "Semua field di entry step diteruskan apa adanya ke loader — jangan taruh",
+    "field yang tidak dipakai kode."
+  ],
+  "steps": {
+    "reliability_f07": {
+      "label": "Reliability F07 (RTC year/alarm)",
+      "command_class": "commands.tm81.reliability_f07.ReliabilityF07"
+    },
+    "reliability_f02": {
+      "label": "Reliability F02 (hang/WDT)",
+      "command_class": "commands.tm81.reliability_f02.ReliabilityF02",
+      "no_retry": true
+    },
+    "reliability_f01": {
+      "label": "Reliability F01 (OOB read)",
+      "command_class": "commands.tm81.reliability_f01.ReliabilityF01",
+      "no_retry": true
+    },
+    "reliability_f12": {
+      "label": "Reliability F12 (history slot)",
+      "command_class": "commands.tm81.reliability_f12.ReliabilityF12"
+    },
+    "reliability_f10": {
+      "label": "Reliability F10 (resp length)",
+      "command_class": "commands.tm81.reliability_f10.ReliabilityF10"
+    },
+    "app_goto_bl": {
+      "label": "App to Bootloader",
+      "command_class": "commands.tm81.app_goto_bl.AppGotoBL",
+      "post_wait_s": 1.5
+    },
+    "backup_read_usage": {
+      "label": "Backup Read Usage",
+      "command_class": "commands.tm81.backup_read_usage.BackupReadUsage",
+      "disabled": true
+    },
+    "backup_write_usage": {
+      "label": "Backup Write Usage",
+      "command_class": "commands.tm81.backup_write_usage.BackupWriteUsage"
+    },
+    "bl_clear_ota": {
+      "label": "BL Clear OTA",
+      "command_class": "commands.tm81.bl_clear_ota.BLClearOta"
+    },
+    "bl_get_session": {
+      "label": "Get BL Session",
+      "command_class": "commands.tm81.bl_get_session.BLGetSession"
+    },
+    "bl_goto_app": {
+      "label": "BL Goto App",
+      "command_class": "commands.tm81.bl_goto_app.BLGotoApp"
+    },
+    "bl_goto_app_bl": {
+      "label": "Activate Bootloader",
+      "command_class": "commands.tm81.bl_goto_app.BLGotoApp",
+      "post_popup": "Angkat aktivator",
+      "post_popup2": "Letakan aktivator",
+      "post_popup_s": 10,
+      "post_popup_phase2_pct": 90
+    },
+    "bl_goto_app_ota": {
+      "label": "Bootloader to App",
+      "command_class": "commands.tm81.bl_goto_app.BLGotoApp",
+      "post_popup": "Angkat aktivator",
+      "post_popup2": "Letakan aktivator",
+      "post_popup_s": 10,
+      "post_popup_phase2_pct": 90
+    },
+    "bl_unlock": {
+      "label": "BL Unlock (5-Knock)",
+      "command_class": "commands.tm81.bl_unlock.BLUnlock"
+    },
+    "sensor_do_reset_config": {
+      "label": "Sensor Reset Config",
+      "command_class": "commands.tm81.sensor_do_reset_config.SensorDoResetConfig"
+    },
+    "dev_info": {
+      "label": "Get Device Info",
+      "command_class": "commands.tm81.dev_get_info.DevGetInfo"
+    },
+    "dev_reset": {
+      "label": "Reset Device (ST-Link)",
+      "command_class": "commands.flash.dev_reset.DevReset",
+      "post_popup": "Angkat aktivator",
+      "post_popup2": "Letakan aktivator",
+      "post_popup_s": 10,
+      "post_popup_phase2_pct": 90
+    },
+    "eeprom_page_sweep": {
+      "label": "EEPROM Page Sweep",
+      "command_class": "commands.tm81.eeprom_page_sweep.EepromPageSweep",
+      "params": {
+        "expect_wipe": true
+      }
+    },
+    "factory_outgoing_reset": {
+      "label": "Factory Outgoing Reset",
+      "command_class": "commands.tm81.factory_outgoing_reset.FactoryOutgoingReset",
+      "post_popup": "Angkat aktivator",
+      "post_popup2": "Letakan aktivator",
+      "post_popup_s": 10,
+      "post_popup_phase2_pct": 90,
+      "params": {
+        "confirm": true
+      }
+    },
+    "get_id": {
+      "label": "Get Device ID",
+      "command_class": "commands.tm81.dev_get_id.DevGetId"
+    },
+    "get_version": {
+      "label": "Get Firmware Version",
+      "command_class": "commands.tm81.user_get_version.UserGetVersion"
+    },
+    "irda_disable": {
+      "label": "IrDA Disable",
+      "command_class": "commands.tm81.irda_disable.IrdaDisable"
+    },
+    "lora_force_send": {
+      "label": "LoRa Force Send",
+      "command_class": "commands.tm81.lora_force_send.LoraForceSend"
+    },
+    "lora_get_config": {
+      "label": "Get LoRa Config",
+      "command_class": "commands.tm81.lora_get_config.LoraGetConfig"
+    },
+    "lora_get_config_post_reset": {
+      "label": "Get LoRa Config",
+      "command_class": "commands.tm81.lora_get_config.LoraGetConfig",
+      "params": { "check_keys": false }
+    },
+    "lora_last_submit": {
+      "label": "Get Last Submit Time",
+      "command_class": "commands.tm81.lora_get_last_submit_time.LoraGetLastSubmitTime"
+    },
+    "lora_set_app_key": {
+      "label": "Set AppKey",
+      "command_class": "commands.tm81.lora_set_app_key.LoraSetAppKey",
+      "validate": {
+        "app_key": 32
+      }
+    },
+    "lora_set_config": {
+      "label": "Set LoRa Config",
+      "command_class": "commands.tm81.lora_set_config.LoraSetConfig",
+      "validate": {
+        "data_rate": 1,
+        "rx1_delay": 1,
+        "tx_power": 1
+      }
+    },
+    "lora_set_dev_addr": {
+      "label": "Set DevAddr",
+      "command_class": "commands.tm81.lora_set_dev_addr.LoraSetDevAddr",
+      "validate": {
+        "dev_addr": "nonzero_hex"
+      }
+    },
+    "lora_set_dev_class": {
+      "label": "Set Device Class",
+      "command_class": "commands.tm81.lora_set_dev_class.LoraSetDevClass",
+      "validate": {
+        "dev_class": 1
+      }
+    },
+    "lora_set_dev_eui": {
+      "label": "Set DevEUI",
+      "command_class": "commands.tm81.lora_set_dev_eui.LoraSetDevEui",
+      "validate": {
+        "dev_eui": 16
+      }
+    },
+    "lora_set_join_eui": {
+      "label": "Set JoinEUI",
+      "command_class": "commands.tm81.lora_set_join_eui.LoraSetJoinEui",
+      "validate": {
+        "join_eui": 16
+      }
+    },
+    "lora_set_join_mode": {
+      "label": "Set Join Mode",
+      "command_class": "commands.tm81.lora_set_join_mode.LoraSetJoinMode",
+      "validate": {
+        "join_mode": 1
+      }
+    },
+    "lora_set_nw_key": {
+      "label": "Set NwKey",
+      "command_class": "commands.tm81.lora_set_nw_key.LoraSetNwKey",
+      "validate": {
+        "nw_key": 32
+      }
+    },
+    "mock_activation": {
+      "label": "Mock Activation",
+      "command_class": "commands.tm81.mock_activation.MockActivation"
+    },
+    "ping": {
+      "label": "Ping MCU",
+      "command_class": "commands.tm81.ping.Ping",
+      "disabled": true
+    },
+    "rtc_get": {
+      "label": "Get RTC Time",
+      "command_class": "commands.tm81.rtc_get_time.RtcGetTime"
+    },
+    "rtc_set": {
+      "label": "Set RTC",
+      "command_class": "commands.tm81.rtc_set_time.RtcSetTime"
+    },
+    "sensor_calibration": {
+      "label": "Sensor Calibration",
+      "command_class": "commands.tm81.sensor_calibration.SensorCalibration",
+      "no_retry": true
+    },
+    "sensor_data": {
+      "label": "Get Sensor Data",
+      "command_class": "commands.tm81.sensor_get_data.SensorGetData"
+    },
+    "sensor_do_get_config": {
+      "label": "Sensor Trigger Config",
+      "command_class": "commands.tm81.sensor_do_get_config.SensorDoGetConfig"
+    },
+    "set_id": {
+      "label": "Set Device ID",
+      "command_class": "commands.tm81.dev_set_id.DevSetId",
+      "params": {
+        "device_id": "@device_id"
+      },
+      "validate": {
+        "device_id": 1
+      }
+    },
+    "standby_mode": {
+      "label": "Enter Standby Mode",
+      "command_class": "commands.tm81.standby_mode.StandbyMode"
+    },
+    "user_get_config": {
+      "label": "Get User Config",
+      "command_class": "commands.tm81.user_get_config.UserGetConfig"
+    },
+    "user_get_config_post_set": {
+      "label": "Get User Config",
+      "command_class": "commands.tm81.user_get_config.UserGetConfig"
+    },
+    "user_last_usage": {
+      "label": "Get Last Usage",
+      "command_class": "commands.tm81.user_last_usage.UserLastUsage"
+    },
+    "user_reset_config": {
+      "label": "User Reset Config",
+      "command_class": "commands.tm81.user_reset_config.UserResetConfig"
+    },
+    "user_reset_battery_config": {
+      "label": "User Reset Battery Config",
+      "command_class": "commands.tm81.user_reset_battery_config.UserResetBatteryConfig"
+    },
+    "user_set_config": {
+      "label": "Set User Config",
+      "command_class": "commands.tm81.user_set_config.UserSetConfig"
+    },
+    "user_synch_config": {
+      "label": "Sync User Config",
+      "command_class": "commands.tm81.user_synch_config.UserSynchConfig"
+    },
+    "wdt_test": {
+      "label": "WDT Test",
+      "command_class": "commands.tm81.wdt_test.WdtTest"
+    },
+    "write_fw": {
+      "label": "Write Firmware",
+      "command_class": "commands.tm81.bl_write_firmware_v2.BLWriteFirmwareV2",
+      "type": "progress",
+      "steps": 50,
+      "step_ms": 200,
+      "no_retry": true
+    },
+    "write_fw_v1": {
+      "label": "Write Firmware",
+      "command_class": "commands.tm81.bl_write_firmware.BLWriteFirmware",
+      "type": "progress",
+      "steps": 50,
+      "step_ms": 200,
+      "no_retry": true
+    }
+  }
+}

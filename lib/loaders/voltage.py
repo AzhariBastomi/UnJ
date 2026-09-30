@@ -1,35 +1,46 @@
 """
 loaders/voltage.py — Voltage test loader.
 
-Auto-discover dari commands/voltage/config/*.json.
-Satu file JSON = satu VoltageTestSource = satu ManualTest.
-Pola sama dengan TM81: setiap source independent, bukan digabung jadi satu batch.
+Daftar titik ukur tegangan dibaca dari commands/voltage/config/voltage.feature
+(urutan & titik mana yang aktif) + commands/voltage/config/_steps.json
+(definisi tiap titik: label/command/description) -- format sama seperti
+mode lean di device lain (lihat lib/loaders/gherkin_lean.py), tapi ditulis
+manual di sini (bukan lewat scan_lean_sources/make_lean_source_class) karena
+modelnya beda: TIAP titik ukur jadi source/baris Add Test SENDIRI-SENDIRI
+(bukan satu suite dengan banyak step yang digabung jadi satu TestItem list).
+
+Satu titik ukur = satu VoltageTestSource = satu ManualTest, sama seperti
+sebelumnya -- yang berubah cuma sumber datanya (dulu 1 file JSON per titik,
+sekarang 1 baris di voltage.feature + definisi di _steps.json).
 """
 
 import logging
 import os
 
 from test_modules import ManualTest
-from loaders.base import JsonTestSource, _ROOT
+from loaders.base import JsonTestSource, _ROOT, read_steps_library
 
-_log      = logging.getLogger(__name__)
-_VOLT_DIR = os.path.join(_ROOT, "commands", "voltage", "config")
+_log        = logging.getLogger(__name__)
+_VOLT_DIR   = os.path.join(_ROOT, "commands", "voltage", "config")
+_STEPS_JSON = os.path.join(_VOLT_DIR, "_steps.json")
+_FEATURE    = os.path.join(_VOLT_DIR, "voltage.feature")
 
 
 class VoltageTestSource(JsonTestSource):
-    """Satu voltage JSON file = satu test source dengan satu ManualTest."""
+    """Satu titik ukur tegangan = satu test source dengan satu ManualTest."""
 
     prefix       = "voltage"
     entity_label = "Voltage test"
 
-    def __init__(self, json_path: str):
-        self.json_path = json_path
-        data           = self.read_json()
-        stem           = os.path.splitext(os.path.basename(json_path))[0]
-        self._name     = data.get("name", stem)
-        self._label    = data.get("label", self._name)
-        self._command  = data.get("command", f"VOLT_{self._name.upper()}")
-        self._desc     = data.get("description", f"Cek tegangan {self._label}")
+    def __init__(self, name: str, entry: dict):
+        # json_path di sini cuma dipakai buat pesan error/referensi -- isi
+        # sebenarnya dari _steps.json + voltage.feature, bukan file JSON
+        # per-titik lagi.
+        self.json_path = _FEATURE
+        self._name     = name
+        self._label    = entry.get("label", name)
+        self._command  = entry.get("command", f"VOLT_{name.upper()}")
+        self._desc     = entry.get("description", f"Cek tegangan {self._label}")
 
     # --- overrides ---
 
@@ -44,8 +55,7 @@ class VoltageTestSource(JsonTestSource):
 
     def load_one(self, entry_name: str) -> ManualTest:
         if entry_name != self._name:
-            fname = os.path.basename(self.json_path)
-            raise KeyError(f"Voltage '{entry_name}' tidak ditemukan di {fname}")
+            raise KeyError(f"Voltage '{entry_name}' tidak ditemukan di voltage.feature")
         return self._build_item()
 
     def make_item(self, entry: dict) -> ManualTest:
@@ -65,19 +75,37 @@ class VoltageTestSource(JsonTestSource):
 # ---------------------------------------------------------------------------
 
 def _scan_voltage_sources() -> list[VoltageTestSource]:
-    """Scan commands/voltage/config/, buat satu VoltageTestSource per *.json."""
+    """Baca voltage.feature (daftar titik ukur aktif + urutan) + _steps.json
+    (definisi tiap titik), bikin satu VoltageTestSource per baris."""
     sources = []
+
+    library = read_steps_library(_STEPS_JSON)
+    if not library:
+        _log.warning("_steps.json voltage kosong/tidak ada: %s", _STEPS_JSON)
+        return sources
+
     try:
-        for fname in sorted(os.listdir(_VOLT_DIR)):
-            if not fname.endswith(".json"):
-                continue
-            path = os.path.join(_VOLT_DIR, fname)
-            try:
-                sources.append(VoltageTestSource(path))
-            except Exception as exc:
-                _log.warning("Gagal load voltage config %s: %s", fname, exc)
-    except FileNotFoundError:
-        _log.warning("Folder voltage config tidak ditemukan: %s", _VOLT_DIR)
+        from loaders.gherkin_common import parse_feature_steps_with_tables
+        steps = parse_feature_steps_with_tables(_FEATURE)
+    except Exception as exc:
+        _log.warning("Gagal baca voltage.feature: %s", exc)
+        return sources
+
+    by_key = {k.lower(): k for k in library}
+    for sentence, _table in steps:
+        needle = sentence.strip().lower()
+        key = by_key.get(needle)
+        if key is None:
+            _log.warning(
+                "Voltage: baris '%s' di voltage.feature tidak match nama "
+                "manapun di _steps.json -- dilewati", sentence
+            )
+            continue
+        try:
+            sources.append(VoltageTestSource(key, library[key]))
+        except Exception as exc:
+            _log.warning("Gagal load voltage entry %s: %s", key, exc)
+
     return sources
 
 
@@ -85,7 +113,7 @@ _voltage_sources: list[VoltageTestSource] = _scan_voltage_sources()
 
 
 def reload_voltage_sources() -> None:
-    """Re-scan folder. Panggil jika JSON baru ditambah saat app berjalan."""
+    """Re-scan voltage.feature/_steps.json. Panggil jika diubah saat app berjalan."""
     global _voltage_sources
     _voltage_sources = _scan_voltage_sources()
 
@@ -110,4 +138,4 @@ def _load_voltage_by_name(entry_name: str) -> ManualTest:
     for src in _voltage_sources:
         if src._name == entry_name:
             return src.load_one(entry_name)
-    raise KeyError(f"Voltage entry '{entry_name}' tidak ditemukan di {_VOLT_DIR}")
+    raise KeyError(f"Voltage entry '{entry_name}' tidak ditemukan di {_FEATURE}")

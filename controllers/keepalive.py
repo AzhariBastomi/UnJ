@@ -181,7 +181,7 @@ class KeepaliveManager:
                 try:
                     if not self.log_tx_rx:
                         _serial_log.setLevel(logging.INFO)
-                    result = str(Ping().execute()).strip()
+                    result = str(Ping(retries=1).execute()).strip()
                     if not self.log_tx_rx:
                         _serial_log.setLevel(logging.NOTSET)
 

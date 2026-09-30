@@ -1,6 +1,24 @@
 """
 commands/tm81/lora_get_config.py — Get LoRaWAN Config (CMD 0x16)
 Response payload (57 bytes): full LoRaWAN configuration.
+
+Selain menampilkan config, step ini ikut memverifikasi dua hal yang jadi
+fail-signature commissioning di firmware >= v1.5.1 (SOP sec.10):
+
+  - NwkKey HARUS sama dengan AppKey. Kalau page 55 pernah ditulis sendiri
+    (cmd 18) atau device masih image < v1.5.1, JoinAccept gagal MIC di
+    LoRaWAN 1.0.3 dan device TIDAK PERNAH join. Perbaikan: jalankan ulang
+    cmd 17 (LoraSetAppKey) yang me-mirror page 55, lalu reboot.
+JoinEUI SENGAJA tidak dicek di sini. Nilai benarnya beda per deployment
+(commissioning.json punya profilnya sendiri, mis. 1111111111111111), dan
+loader sudah membandingkannya lewat badge "vs Commissioning". Angka
+0000000000000000 di SOP itu default kompilasi SWM, bukan aturan universal.
+
+Cek hanya jalan saat join_mode = OTAA (ABP tidak memakai AppKey), dan bisa
+dimatikan lewat params {"check_keys": false} kalau step dipakai sekadar untuk
+dump config.
+
+Referensi: SWM_Test_Scripts/docs/device_flows_sop.md sec.10
 """
 
 import logging
@@ -17,6 +35,11 @@ except ImportError:
 
 
 class LoraGetConfig(TM81Command):
+
+    def __init__(self, conn=None, timeout=None, params=None):
+        super().__init__(conn, timeout)
+        p = params or {}
+        self._check_keys = bool(p.get("check_keys", True))
 
     def execute(self) -> str:
         result = self.xfer(CmdId.GET_LORA_DATA)
@@ -48,6 +71,19 @@ class LoraGetConfig(TM81Command):
         for k, v in config.items():
             _log.debug(f"  {k}: {v}")
 
+        # ── Verifikasi commissioning (SOP sec.10, fw >= v1.5.1) ─────────────
+        problems = []
+        if self._check_keys and config["join_mode"] == "OTAA":
+            if (config["app_key"] != "N/A" and config["nwk_key"] != "N/A"
+                    and config["nwk_key"] != config["app_key"]):
+                problems.append(
+                    "NwkKey != AppKey — JoinAccept gagal MIC di LoRaWAN 1.0.3, "
+                    "device tidak akan join. Jalankan ulang Set AppKey (cmd 17) "
+                    "yang me-mirror page 55, lalu reboot."
+                )
+        for p in problems:
+            _log.warning("  [lora_cfg] %s", p)
+
         summary = f"Class {config['lora_class']} | {config['join_mode']} | DR{config['data_rate']} | TxPwr {config['tx_power']}"
         detail = "\n".join([
             f"Class      : {config['lora_class']}",
@@ -60,7 +96,11 @@ class LoraGetConfig(TM81Command):
             f"TX Power   : {config['tx_power']}",
             f"Data Rate  : {config['data_rate']}",
             f"RX1 Delay  : {config['rx1_delay']}",
-        ])
+        ] + (["", "Commissioning check"] + [f"  - {p}" for p in problems]
+             if problems else []))
+
+        if problems:
+            return f"NG:{len(problems)} masalah commissioning — {problems[0].split(' — ')[0]}\n{detail}"
         return f"OK:{summary}\n{detail}"
 
     def get_config(self) -> dict:

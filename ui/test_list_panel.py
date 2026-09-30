@@ -103,19 +103,5 @@ class TestListPanel(tk.Frame):
         for row in self._rows:
             row.refresh_validation()
 
-    def scroll_to_row(self, row: TestRowWidget):
-        self._inner.update_idletasks()
-        try:
-            row_y    = row.frame.winfo_y()
-            total_h  = self._inner.winfo_height()
-            canvas_h = self._canvas.winfo_height()
-            if total_h <= canvas_h:
-                return
-            target_y = row_y - canvas_h * 0.3
-            fraction = max(0.0, min(1.0, target_y / (total_h - canvas_h)))
-            self._canvas.yview_moveto(fraction)
-        except Exception:
-            pass
-
     def _on_run_request(self, row: TestRowWidget):
         self.controller.run_test(row)

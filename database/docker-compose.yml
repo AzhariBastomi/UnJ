@@ -1,0 +1,37 @@
+services:
+  jig-postgres:
+    # Pinned to postgres:16-alpine (bukan 18) — image 18+ ubah struktur
+    # direktori data (butuh single-mount /var/lib/postgresql + subdir
+    # versi), yang bikin container crash-loop di volume lama/campuran.
+    # 16-alpine pakai layout lama yang stabil, cukup untuk kebutuhan project ini.
+    image: postgres:16-alpine
+    container_name: jig-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: jig
+      POSTGRES_PASSWORD: jig
+      POSTGRES_DB: jig
+    ports:
+      - "5432:5432"
+    volumes:
+      - jig_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jig -d jig"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Opsional: UI web untuk lihat isi database langsung (bukan dashboard Jig).
+  # Buka http://localhost:8081 setelah `docker compose up`, login dengan
+  # System=PostgreSQL, Server=jig-postgres, Username=jig, Password=jig, DB=jig.
+  jig-adminer:
+    image: adminer:latest
+    container_name: jig-adminer
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    depends_on:
+      - jig-postgres
+
+volumes:
+  jig_pgdata:

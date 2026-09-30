@@ -73,8 +73,10 @@ class FlashTest(TestBase):
         fw_path = fw_file if os.path.isabs(fw_file) else os.path.join(flash_dir, fw_file)
         if not os.path.isfile(fw_path):
             return f"NG:file tidak ada: {fw_path}"
-        reset   = region.get("reset", True)
-        cfg     = Stm32Config(stlink_bin=tool, flash_addr=address, reset=reset)
+        reset      = region.get("reset", True)
+        reset_mode = region.get("reset_mode", "software")  # "software" (default) | "hardware"
+        cfg        = Stm32Config(stlink_bin=tool, flash_addr=address,
+                                  reset=reset, reset_mode=reset_mode)
         result  = Stm32Flasher(cfg).flash(fw_path, progress_cb=self.report_progress)
 
         return "OK" if result.ok else f"NG:{result.message}"

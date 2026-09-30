@@ -25,8 +25,9 @@
       "description": "Flash region bootloader TM81",
       "command_class": "tests.flash_test.FlashTest",
       "address": "0x08000000",
-      "file": "C:\\Users\\basto\\Documents\\GitHub\\Universal-JIG\\firmware\\WaterMeter\\New folder\\SWM_KG200Z_Bootloader.bin",
-      "type": "progress"
+      "file": "C:\\Users\\basto\\Documents\\GitHub\\Universal-JIG\\firmware\\WaterMeter\\SWM_KG200Z_Bootloader1.1.0.bin",
+      "type": "progress",
+      "reset_mode": "hardware"
     },
     {
       "name": "app",
@@ -34,8 +35,9 @@
       "description": "Flash region application TM81",
       "command_class": "tests.flash_test.FlashTest",
       "address": "0x08008000",
-      "file": "C:\\Users\\basto\\Documents\\GitHub\\Universal-JIG\\firmware\\WaterMeter\\New folder\\KG200Z_OPEN.bin",
-      "type": "progress"
+      "file": "C:\\Users\\basto\\Downloads\\KG200Z_OPEN_jimmy.bin",
+      "type": "progress",
+      "reset_mode": "hardware"
     }
   ]
 }

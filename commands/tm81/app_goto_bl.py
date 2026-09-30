@@ -19,6 +19,8 @@ BOOT_REASON_IRDA_OTA = 2
 
 class AppGotoBL(TM81Command):
 
+    RETRIES = 1   # reboot App -> BL; jangan dikirim ulang
+
     def execute(self) -> str:
         data   = BOOT_REASON_IRDA_OTA.to_bytes(1, "little")
         result = self.xfer(CmdId.USR_REBOOT_BOOTLOADER, data=data, timeout=5.0)

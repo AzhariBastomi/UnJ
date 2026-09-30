@@ -11,11 +11,13 @@ import logging
 _log = logging.getLogger(__name__)
 try:
     from commands.tm81.base import TM81Command, CmdId
+    from commands.tm81.dev_get_info import DevGetInfo
 except ImportError:
     import sys as _sys, os as _os
     _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", ".."))
     _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", "..", "lib"))
     from commands.tm81.base import TM81Command, CmdId
+    from commands.tm81.dev_get_info import DevGetInfo
 
 
 class UserSetConfig(TM81Command):
@@ -40,9 +42,23 @@ class UserSetConfig(TM81Command):
             + self._timezone.to_bytes(1, "little", signed=True)   # signed: support UTC negatif
             + self._msg_type.to_bytes(1, "little")
         )
-        result = self.xfer(CmdId.USR_SET_CFG, data)
-        if not result.valid and result.error not in ("ACK",):
-            return f"NG:{result.error}"
+        # Flow: Set Config OK → Get Device Info. Kalau ever_joined=True tapi
+        # in_join_session=False, kirim ulang Set Config (cukup sekali saja).
+        resent = False
+        for attempt in range(2):
+            result = self.xfer(CmdId.USR_SET_CFG, data)
+            if not result.valid and result.error not in ("ACK",):
+                return f"NG:{result.error}"
+            if attempt:
+                break
+            gi = DevGetInfo(conn=self._conn, timeout=self._timeout)
+            if gi.execute().startswith("OK"):
+                info = gi.get_info()
+                if info.get("ever_joined") and not info.get("in_join_session"):
+                    _log.debug("  Ever joined & tidak in join session → kirim ulang Set Config")
+                    resent = True
+                    continue
+            break
         SUBMIT = {0:"15min",1:"30min",2:"1h",3:"3h",4:"12h",5:"1day",6:"3day",7:"7day"}
         CRES   = {0:"1L",1:"10L",2:"100L"}
         ACT    = {0:"Deactivated",1:"Activated"}
@@ -66,7 +82,7 @@ class UserSetConfig(TM81Command):
             f"Submit rate  : {submit}",
             f"Timezone     : UTC{tz_sign}{self._timezone}",
             f"Msg type     : {msg}",
-        ])
+        ] + (["Re-sent      : Yes (ever joined, not in join session)"] if resent else []))
         _log.debug(f"  User Set Config → OK  {brief}")
         return f"OK:{brief}\n{detail}"
 

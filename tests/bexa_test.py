@@ -34,16 +34,16 @@ class BexaTest(TestBase):
 # ─────────────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    import importlib, json
+    import importlib, os, sys
 
-    _here     = os.path.dirname(os.path.abspath(__file__))
-    _json_path = os.path.join(_here, "..", "commands", "bexa", "config", "bexa_test.json")
-    if not os.path.exists(_json_path):
-        print("NG: bexa_test.json tidak ditemukan"); sys.exit(1)
-
-    import os, sys
-    _data   = json.load(open(_json_path, encoding="utf-8"))
-    _tests  = _data.get("tests", [])
+    _here = os.path.dirname(os.path.abspath(__file__))
+    _sys.path.insert(0, os.path.join(_here, "..", "lib"))
+    # Lewat loaders.bexa (bukan baca bexa_test.json langsung) -- suite ini
+    # sekarang bisa berupa bexa_test.json BIASA atau mode ringkas (cuma
+    # commands/bexa/config/bexa_test.feature, tanpa JSON sama sekali).
+    # Lihat lib/loaders/bexa.py & lib/loaders/gherkin_lean.py.
+    from loaders.bexa import _active_bexa_source
+    _tests  = _active_bexa_source.entries()
     _filter = sys.argv[1:] if len(sys.argv) > 1 else []
 
     import serial_manager as sm

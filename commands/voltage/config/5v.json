@@ -1,6 +1,0 @@
-{
-  "name":        "3v3",
-  "label":       "3.3V",
-  "command":     "VOLT_3V3",
-  "description": "Cek tegangan 3.3V"
-}

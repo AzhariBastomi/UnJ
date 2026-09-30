@@ -1,0 +1,20 @@
+{
+  "_doc": "Library definisi tiap titik ukur tegangan -- dipakai voltage.feature (lib/loaders/voltage.py). Field: label, command, description.",
+  "steps": {
+    "1v8": {
+      "label": "1.8V",
+      "command": "VOLT_1V8",
+      "description": "Cek tegangan 1.8V"
+    },
+    "3v3": {
+      "label": "3.3V",
+      "command": "VOLT_3V3",
+      "description": "Cek tegangan 3.3V"
+    },
+    "5v": {
+      "label": "5V",
+      "command": "VOLT_5V",
+      "description": "Cek tegangan 5V"
+    }
+  }
+}

@@ -28,10 +28,14 @@ except ImportError:
     _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", "..", "lib"))
     from commands.tm81.base import TM81Command, CmdId
 
+from commands.tm81.bl_tools import fw_max_size, check_fw_size
+
 _NO_FRAME = 0xFFFF   # nilai last_frame_id jika belum ada frame yang tersimpan
 
 
 class BLWriteFirmwareV2(TM81Command):
+
+    RETRIES = 1   # retry per chunk/progress sudah diatur sendiri
     CHUNK_SIZE   = 512
     FILL_WITH_FF = False
     APP_MAX_SIZE = 1024 * 160   # 160 KB
@@ -42,6 +46,8 @@ class BLWriteFirmwareV2(TM81Command):
         self._fw_path      = p.get("fw_path", "")
         self._chunk_size   = p.get("chunk_size",   self.CHUNK_SIZE)
         self._fill_with_ff = p.get("fill_with_ff", self.FILL_WITH_FF)
+        # "app" (default) atau "bl" — suite tm81_ota_bl di-set "bl" oleh loader
+        self._region       = str(p.get("region", "app")).lower()
         self._progress_cb  = p.get("progress_cb",  None)
 
     def _resolve_fw_path(self) -> str:
@@ -70,15 +76,20 @@ class BLWriteFirmwareV2(TM81Command):
             return f"NG:File tidak ditemukan: {fw_path!r}"
         self._fw_path = fw_path
 
+        size_err = check_fw_size(self._fw_path, self._region)
+        if size_err:
+            return size_err
+        max_size = fw_max_size(self._region)
+
         with open(self._fw_path, "rb") as f:
-            fw_data = f.read(self.APP_MAX_SIZE)
+            fw_data = f.read(max_size)
 
         fw_size   = len(fw_data)
         crc_bytes = Crc32Mpeg2.calc(fw_data).to_bytes(4, "little")
         file_crc  = int.from_bytes(crc_bytes, "little")
 
-        if self._fill_with_ff and fw_size < self.APP_MAX_SIZE:
-            fw_data += b"\xff" * (self.APP_MAX_SIZE - fw_size)
+        if self._fill_with_ff and fw_size < max_size:
+            fw_data += b"\xff" * (max_size - fw_size)
 
         _log.debug("  FW: %s", os.path.basename(self._fw_path))
         _log.debug("  Size: %d B  CRC: %s", fw_size, crc_bytes.hex(" "))

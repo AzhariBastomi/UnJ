@@ -17,6 +17,8 @@ except ImportError:
 
 class LoraForceSend(TM81Command):
 
+    RETRIES = 1   # tiap kirim = 1 uplink; jangan dobel
+
     _ACK          = 0x11
     _RECOVERY     = 0xE6
 

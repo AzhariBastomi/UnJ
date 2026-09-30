@@ -43,63 +43,146 @@ class TM81Test(TestBase):
 
 
 # =============================================================================
-# Standalone — python tests/tm81_test.py [test_name ...]
-#   python tests/tm81_test.py              # jalankan semua yang tidak disabled
-#   python tests/tm81_test.py ping rtc_get # hanya test tertentu
+# Standalone — python tests/tm81_test.py [opsi] [nama_step ...]
+#
+#   python tests/tm81_test.py                        # suite tm81, semua step
+#   python tests/tm81_test.py ping rtc_get           # suite tm81, step tertentu
+#   python tests/tm81_test.py --suite tm81_ota       # suite lain
+#   python tests/tm81_test.py --suite tm81_ota write_fw
+#   python tests/tm81_test.py --list                 # daftar suite
+#   python tests/tm81_test.py --suite tm81_ota --list  # daftar step di suite
+#
+# Suite dibaca lewat JsonTestSource, jadi format "tests" (lama) maupun
+# "steps" (ringkas, merujuk _steps.json) dua-duanya jalan tanpa beda.
 # =============================================================================
 
-if __name__ == "__main__":
-    import importlib, json
+_CONFIG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                           "..", "commands", "tm81", "config")
+_STEPS_JSON = os.path.join(_CONFIG_DIR, "_steps.json")
 
-    _here = os.path.dirname(os.path.abspath(__file__))
-    _json_path = os.path.join(_here, "..", "commands", "tm81", "config", "tm81_test.json")
-    if not os.path.exists(_json_path):
-        print("NG: tm81_test.json tidak ditemukan"); sys.exit(1)
 
-    _data    = json.load(open(_json_path, encoding="utf-8"))
-    _tests   = _data.get("tests", [])
-    _filter  = sys.argv[1:] if len(sys.argv) > 1 else []
+def _all_sources() -> list:
+    """Semua source TM81 aktif, lewat loaders.tm81 (BUKAN scan file sendiri) --
+    ini satu-satunya cara yang otomatis benar utk ketiga mode suite: JSON
+    biasa, JSON + .feature override urutan (replace-in-place), dan mode
+    ringkas 1-file .feature saja / .feature + JSON pengaturan kecil (OTA).
+    Lihat lib/loaders/tm81.py & lib/loaders/gherkin_lean.py."""
+    from loaders.tm81 import get_tm81_extra_sources
+    return get_tm81_extra_sources()
+
+
+def _list_suites() -> list:
+    """Nama (prefix) semua suite TM81 yang aktif, urut abjad."""
+    return sorted(s.prefix for s in _all_sources())
+
+
+def _make_source(suite: str):
+    """Cari source TM81 aktif dengan prefix persis 'suite'. None kalau tidak ada."""
+    for s in _all_sources():
+        if s.prefix == suite:
+            return s
+    return None
+
+
+def _resolve_suite(name: str) -> str:
+    """Prefix TM81 sekarang selalu persis nama yang dipakai module_names()
+    (mis. "tm81", "tm81_ota") -- tidak ada lagi alias nama-file vs
+    "prefix"-di-JSON yang perlu di-resolve terpisah."""
+    return name
+
+
+def _main() -> int:
+    import argparse
+    import importlib
+
+    ap = argparse.ArgumentParser(
+        prog="tm81_test.py",
+        description="Jalankan suite test TM81 dari terminal (tanpa GUI).")
+    ap.add_argument("steps", nargs="*",
+                    help="nama step yang dijalankan; kosong = semua")
+    ap.add_argument("--suite", default="tm81",
+                    help="nama suite (default: tm81 = tm81_test.json)")
+    ap.add_argument("--list", action="store_true",
+                    help="tampilkan daftar suite, atau daftar step bila --suite diberikan")
+    ap.add_argument("--conn", default="ch340",
+                    help="nama koneksi serial (default: ch340)")
+    args = ap.parse_args()
+
+    if args.list and args.suite == "tm81" and not any(
+            a.startswith("--suite") for a in sys.argv[1:]):
+        print("Suite tersedia:")
+        for s in _list_suites():
+            src = _make_source(s)
+            n   = len(src.entries()) if src else 0
+            print(f"  {s:22s} {n:2d} step")
+        return 0
+
+    suite = _resolve_suite(args.suite)
+    src   = _make_source(suite)
+    if src is None:
+        print(f"NG: suite '{args.suite}' tidak ditemukan di {_CONFIG_DIR}")
+        print("    pilihan:", ", ".join(_list_suites()) or "(kosong)")
+        return 1
+
+    entries = src.entries()
+    if not entries:
+        print(f"NG: suite '{suite}' tidak punya step")
+        return 1
+
+    if args.list:
+        print(f"Step di {suite} ({len(entries)}):")
+        for e in entries:
+            mark = " [disabled]" if e.get("disabled") else ""
+            print(f"  {e.get('name','?'):24s} {e.get('label','')}{mark}")
+        return 0
+
+    unknown = [n for n in args.steps if n not in {e.get("name") for e in entries}]
+    if unknown:
+        print(f"NG: step tidak ada di suite '{suite}': {', '.join(unknown)}")
+        return 1
 
     import serial_manager as sm
-    sm.connect("ch340")
+    sm.connect(args.conn)
 
-    _passed = _failed = _skipped = 0
+    passed = failed = skipped = 0
+    print(f"Suite: {suite} ({len(entries)} step)\n")
 
-    for _entry in _tests:
-        _name    = _entry.get("name", "?")
-        _label   = _entry.get("label", _name)
-        _disabled = _entry.get("disabled", False)
-        _cls_path = _entry.get("command_class", "")
+    try:
+        for entry in entries:
+            name      = entry.get("name", "?")
+            label     = entry.get("label", name)
+            cls_path  = entry.get("command_class", "")
 
-        if _disabled:
-            print(f"  [SKIP] {_label}")
-            _skipped += 1
-            continue
+            if args.steps and name not in args.steps:
+                continue
+            if entry.get("disabled", False):
+                print(f"  [SKIP] {label}")
+                skipped += 1
+                continue
+            if not cls_path:
+                print(f"  [SKIP] {label}: command_class kosong")
+                skipped += 1
+                continue
 
-        if _filter and _name not in _filter:
-            continue
+            mod_path, _, cls_name = cls_path.rpartition(".")
+            try:
+                cls    = getattr(importlib.import_module(mod_path), cls_name)
+                params = entry.get("params", {})
+                result = (cls(params=params) if params else cls()).execute()
+            except Exception as e:
+                result = f"NG:{e}"
 
-        if not _cls_path:
-            print(f"  [SKIP] {_label}: no command_class")
-            _skipped += 1
-            continue
+            result = str(result)
+            ok     = result.startswith("OK")
+            print(f"  [{'PASS' if ok else 'FAIL'}] {label}: {result.splitlines()[0]}")
+            if ok: passed += 1
+            else:  failed += 1
+    finally:
+        sm.disconnect_all()
 
-        # Dynamic import: "commands.tm81.ping.Ping" -> module + class
-        _mod_path, _, _cls_name = _cls_path.rpartition(".")
-        try:
-            _mod    = importlib.import_module(_mod_path)
-            _cls    = getattr(_mod, _cls_name)
-            _params = _entry.get("params", {})
-            _cmd    = _cls(params=_params) if _params else _cls()
-            _result = _cmd.execute()
-        except Exception as _e:
-            _result = f"NG:{_e}"
+    print(f"\nTotal: {passed} PASS, {failed} FAIL, {skipped} SKIP")
+    return 1 if failed else 0
 
-        _ok = _result.startswith("OK")
-        _status = "PASS" if _ok else "FAIL"
-        print(f"  [{_status}] {_label}: {_result}")
-        if _ok: _passed += 1
-        else:   _failed += 1
 
-    print(f"\nTotal: {_passed} PASS, {_failed} FAIL, {_skipped} SKIP")
-    sm.disconnect_all()
+if __name__ == "__main__":
+    sys.exit(_main())

@@ -17,6 +17,8 @@ except ImportError:
 
 class WdtTest(TM81Command):
 
+    RETRIES = 1   # memicu reset WDT; jangan dikirim ulang
+
     def execute(self) -> str:
         result = self.xfer(CmdId.USR_TEST_WDT, timeout=5.0)
         # Device reset setelah WDT, ACK atau timeout dua-duanya normal

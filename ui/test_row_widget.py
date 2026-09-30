@@ -12,7 +12,9 @@ if _UI_DIR not in sys.path:
     sys.path.insert(0, _UI_DIR)
 
 import tkinter as tk
+from tkinter import ttk
 from dataclasses import dataclass
+from scroll_util import bind_scroll
 from test_modules import TestResult
 from config import COLORS, BASE_FONTS
 from row_behavior import get_behavior
@@ -302,8 +304,23 @@ class TestRowWidget:
                  pady=8, padx=16).pack(anchor="w")
         tk.Frame(popup, height=1, bg=COLORS["border"]).pack(fill="x", padx=12)
 
-        frm = tk.Frame(popup, bg=COLORS["surface"], padx=16, pady=10)
-        frm.pack(fill="both")
+        # Scrollable content area — popup TIDAK BOLEH lebih besar dari main
+        # app (device layar kecil/touch): tinggi/lebar canvas di-clamp ke
+        # ukuran window utama, kelebihan konten discroll (roda mouse / geser
+        # jari via bind_scroll, sama seperti dialog Add Test).
+        _container = tk.Frame(popup, bg=COLORS["surface"])
+        _container.pack(fill="both", expand=True)
+
+        _canvas = tk.Canvas(_container, highlightthickness=0, bg=COLORS["surface"])
+        _vsb    = ttk.Scrollbar(_container, orient="vertical", command=_canvas.yview)
+        frm     = tk.Frame(_canvas, bg=COLORS["surface"], padx=16, pady=10)
+
+        _inner_id = _canvas.create_window((0, 0), window=frm, anchor="nw")
+        frm.bind("<Configure>",
+                 lambda e: _canvas.configure(scrollregion=_canvas.bbox("all")))
+        _canvas.bind("<Configure>",
+                     lambda e: _canvas.itemconfig(_inner_id, width=e.width))
+        _canvas.configure(yscrollcommand=_vsb.set)
 
         # row_widgets: key → (row_frame, val_label) — dipakai popup_extra_fn
         # untuk menambah badge OK/NG inline tanpa baris baru
@@ -329,6 +346,10 @@ class TestRowWidget:
                          font=("TkDefaultFont", fs_b),
                          anchor="w").pack(fill="x", pady=1)
 
+        _canvas.pack(side="left", fill="both", expand=True)
+        _vsb.pack(side="right", fill="y")
+        bind_scroll(_canvas, area=_container)
+
         tk.Frame(popup, height=1, bg=COLORS["border"]).pack(fill="x", padx=12)
 
         # Hook: command tertentu bisa menambahkan widget ekstra di detail popup
@@ -346,6 +367,19 @@ class TestRowWidget:
 
         popup.update_idletasks()
         root = self.frame.winfo_toplevel()
+
+        # Clamp: popup tidak boleh melebihi window utama (sisakan margin).
+        max_w = max(200, root.winfo_width()  - 40)
+        max_h = max(150, root.winfo_height() - 40)
+        content_w = frm.winfo_reqwidth()
+        content_h = frm.winfo_reqheight()
+        canvas_w  = min(content_w, max_w)
+        canvas_h  = min(content_h, max_h - 80)  # -80 utk header/footer popup
+        _canvas.configure(width=canvas_w, height=canvas_h)
+        if content_h <= canvas_h:
+            _vsb.pack_forget()  # semua konten muat, scrollbar tidak perlu
+
+        popup.update_idletasks()
         px = root.winfo_rootx() + root.winfo_width()  // 2 - popup.winfo_width()  // 2
         py = root.winfo_rooty() + root.winfo_height() // 2 - popup.winfo_height() // 2
         popup.geometry(f"+{px}+{py}")
