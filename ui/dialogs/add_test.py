@@ -196,7 +196,7 @@ class AddTestDialog(TouchPopupMixin, tk.Toplevel):
             _st   = self._btn_state(_proj)
             _has_progress = any(
                 e.get("type", "auto") == "progress"
-                for e in _src.read_json().get("tests", [])
+                for e in _src.entries()
             )
             _badge = "progress" if _has_progress else "auto"
             _row(f"{_lbl} ({len(_names)} test)", _badge,

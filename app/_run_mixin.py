@@ -22,11 +22,13 @@ class RunMixin:
             return
 
         current_sn = self._device_var.get().strip()
+        is_resume = False
         if current_sn and current_sn == self._resume_sn:
             for row in rows:
                 if row.test_item.result != TestResult.OK:
                     row.reset()
             self._status_var.set("Melanjutkan dari step NG…")
+            is_resume = True
         else:
             saved = self._load_resume_state()
             if current_sn and saved.get("sn") == current_sn:
@@ -37,18 +39,28 @@ class RunMixin:
                         rows[idx].set_result(TestResult.OK, ok_msg="(resumed)")
                 self._resume_sn = current_sn
                 self._status_var.set("Melanjutkan dari step NG (setelah restart)…")
+                is_resume = True
             else:
                 for row in rows:
                     row.reset()
                 self._resume_sn = ""
                 self._clear_resume_state()
 
-        self._reset_db_session()
+        if is_resume:
+            # Lanjut dari NG: reuse sesi DB yang sama, jangan bikin sesi baru.
+            # Kalau uploader lama masih ada di memori (belum restart app),
+            # session id-nya otomatis tetap kepakai -- tidak perlu apa-apa.
+            # Kalau app baru di-restart (uploader hilang), coba reattach ke
+            # sesi lama yang masih "open" (belum finalized) di server.
+            uploader = self._controller._uploader
+            if not (uploader and getattr(uploader, "_session_id", None)):
+                self._new_db_session(force_new=False)
+        else:
+            self._reset_db_session()
         self._toggle_btn.config(text="⏹  Stop", bg="#e67e22")
         self._controller.run_all(
             rows,
             done_callback=self._on_seq_done,
-            scroll_fn=self._list_panel.scroll_to_row,
         )
 
     def _do_stop(self):
@@ -77,7 +89,10 @@ class RunMixin:
             self._status_var.set(f"NG: {ng_names}")
             if hasattr(self, "_status_lbl"):
                 self._status_lbl.config(fg=COLORS["ng"])
-            self._finalize_db_session("NG")
+            # Sengaja TIDAK di-finalize di sini -- sesi dibiarkan "open" supaya
+            # kalau dilanjutkan (Start lagi), test berikutnya masuk ke sesi
+            # yang sama, bukan sesi baru. Baru di-finalize kalau semua PASS,
+            # atau kalau user pindah ke SN lain (lihat _reset_db_session).
         elif len(ok_rows) == len(rows):
             self._resume_sn = ""
             self._clear_resume_state()

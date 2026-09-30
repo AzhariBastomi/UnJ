@@ -31,6 +31,8 @@ except ImportError:
     _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", "..", "lib"))
     from commands.tm81.base import TM81Command, CmdId
 
+from commands.tm81.bl_tools import fw_max_size, check_fw_size
+
 # Batas maksimum ukuran firmware App (sama dengan referensi AppConstants.FW_APP_MAX_SIZE)
 APP_MAX_SIZE = 1024 * 160   # 160 KB
 
@@ -43,6 +45,8 @@ class BLPrepare(TM81Command):
     Harus dipanggil setelah AppGotoBL (+ jeda boot) dan sebelum BLWriteFirmware.
     """
 
+    RETRIES = 1   # SET_RDY = erase region; jangan diulang otomatis
+
     # Jeda setelah BL_SET_RDY ACK sebelum mulai kirim chunk (referensi: sleep(1))
     POST_SET_RDY_WAIT_S = 1.0
 
@@ -50,14 +54,19 @@ class BLPrepare(TM81Command):
         super().__init__(conn, timeout)
         p = params or {}
         self._fw_path = p.get("fw_path", "")
+        self._region  = str(p.get("region", "app")).lower()
 
     def execute(self) -> str:
         if not self._fw_path or not os.path.isfile(self._fw_path):
             return f"NG:File tidak ditemukan: {self._fw_path!r}"
 
-        # Baca firmware (maks APP_MAX_SIZE) — hitung ukuran dan CRC
+        size_err = check_fw_size(self._fw_path, self._region)
+        if size_err:
+            return size_err
+
+        # Baca firmware (maks sesuai region) — hitung ukuran dan CRC
         with open(self._fw_path, "rb") as f:
-            fw_data = f.read(APP_MAX_SIZE)
+            fw_data = f.read(fw_max_size(self._region))
 
         fw_size   = len(fw_data)
         crc_bytes = Crc32Mpeg2.calc(fw_data).to_bytes(4, "little")

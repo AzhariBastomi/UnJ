@@ -96,8 +96,8 @@ def _scan_flash_sources() -> list[FlashTestSource]:
     sources = []
     try:
         for fname in sorted(os.listdir(_FLASH_DIR)):
-            if not fname.endswith(".json"):
-                continue
+            if not fname.endswith(".json") or fname.startswith("_"):
+                continue  # "_map_<stem>.json" dll -- bukan suite flash
             path = os.path.join(_FLASH_DIR, fname)
             try:
                 sources.append(FlashTestSource(path))
@@ -105,6 +105,22 @@ def _scan_flash_sources() -> list[FlashTestSource]:
                 _log.warning("Gagal load flash config %s: %s", fname, exc)
     except FileNotFoundError:
         _log.warning("Folder flash config tidak ditemukan: %s", _FLASH_DIR)
+
+    # Tiap project flash yang punya features/<stem>.feature yang cocok dapat
+    # satu source Gherkin tambahan (baris terpisah di Add Test, label
+    # posisi yang sama) -- lihat loaders/gherkin_common.py.
+    # Kalau ada features/<stem>.feature yang cocok, GANTI source JSON di
+    # posisi yang sama (bukan baris tambahan) -- lihat catatan yang sama di
+    # loaders/tm81.py._scan_tm81_sources().
+    try:
+        from loaders.gherkin_common import wrap_if_feature_exists
+        for _i, _s in enumerate(sources):
+            _g = wrap_if_feature_exists(_s)
+            if _g is not None:
+                sources[_i] = _g
+    except Exception as e:
+        _log.warning("Gagal load Gherkin flash sources: %s", e)
+
     return sources
 
 

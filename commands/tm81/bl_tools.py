@@ -9,7 +9,31 @@ Digunakan oleh: bl_write_firmware_v2.py, bl_goto_app.py, bl_clear_ota.py
 """
 
 import logging
+import os
 _log = logging.getLogger(__name__)
+
+# Batas ukuran image OTA per region — sama dengan SWM Lib/Env.py
+# (AppConstants.FW_APP_MAX_SIZE / FW_BOOTLOADER_MAX_SIZE).
+APP_MAX_SIZE = 1024 * 160   # 160 KB
+BL_MAX_SIZE  = 1024 * 32    # 32 KB
+
+
+def fw_max_size(region: str) -> int:
+    """Batas ukuran image untuk region OTA ("app" / "bl")."""
+    return BL_MAX_SIZE if str(region or "app").lower() == "bl" else APP_MAX_SIZE
+
+
+def check_fw_size(fw_path: str, region: str) -> "str | None":
+    """Tolak file yang lebih besar dari batas region (mis. file App dipilih
+    di suite OTA Bootloader). Return pesan NG, atau None kalau aman.
+    Dulu file dipotong diam-diam ke 160 KB tanpa peringatan."""
+    size  = os.path.getsize(fw_path)
+    limit = fw_max_size(region)
+    if size > limit:
+        reg = "BOOTLOADER" if limit == BL_MAX_SIZE else "APP"
+        return (f"NG:{os.path.basename(fw_path)} = {size} B melebihi batas region "
+                f"{reg} ({limit} B) — salah pilih file firmware?")
+    return None
 
 _NO_FRAME   = 0xFFFF   # sentinel: belum ada frame yang tersimpan di EEPROM
 _CHUNK_SIZE = 512      # ukuran per frame OTA (harus sama dengan BLWriteFirmwareV2.CHUNK_SIZE)

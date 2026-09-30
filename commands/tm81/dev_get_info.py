@@ -14,6 +14,11 @@ Response payload (20 bytes):
   [17]   Is in Join/Uplink Session
   [18]   Is Ever Joined
   [19]   Is Last Uplink Success
+  [20]   Is Last Uplink in Retry      (firmware baru, payload 22 byte)
+  [21]   Last Uplink Retry Count      (firmware baru, payload 22 byte)
+
+Firmware lama mengirim 20 byte — byte 20-21 hanya dibaca kalau ada.
+Referensi: SWM_Test_Scripts/Src/DevGetInfo.py
 """
 
 import logging
@@ -57,6 +62,10 @@ class DevGetInfo(TM81Command):
             "ever_joined":              bool(d[18]),
             "last_uplink_success":      bool(d[19]),
         }
+        has_retry = len(d) >= 22
+        if has_retry:
+            info["last_uplink_in_retry"]    = bool(d[20])
+            info["last_uplink_retry_count"] = d[21]
 
         self._last_payload = d
         self._last_info = info
@@ -86,7 +95,10 @@ class DevGetInfo(TM81Command):
             f"In Join Session    : {info['in_join_session']}",
             f"Ever Joined        : {info['ever_joined']}",
             f"Last Uplink Success: {info['last_uplink_success']}",
-        ])
+        ] + ([
+            f"Last Uplink Retry  : {info['last_uplink_in_retry']}",
+            f"Retry Count        : {info['last_uplink_retry_count']}",
+        ] if has_retry else []))
 
         return f"OK:{summary}\n{detail}"
 

@@ -11,6 +11,8 @@ except ImportError:
 
 
 class StandbyMode(TM81Command):
+
+    RETRIES = 1   # device masuk standby; jangan dikirim ulang
     def execute(self) -> str:
         result = self.xfer(CmdId.ENTER_STANDBY)
         if not result.valid and result.error not in ("ACK",):

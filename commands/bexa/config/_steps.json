@@ -1,0 +1,88 @@
+{
+  "_doc": "Step library BEXA -- diekstrak otomatis dari bexa_test.json supaya suite baru bisa dibuat via 1 file .feature saja (lean), mirip pola _steps.json di commands/tm81/config/. Definisi kanonik tiap step (label, command_class) ada di sini.",
+  "steps": {
+    "config_request": {
+      "label": "Config Request",
+      "command_class": "commands.bexa.cmd_config.ConfigRequest"
+    },
+    "battery_request": {
+      "label": "Battery Status",
+      "command_class": "commands.bexa.cmd_config.BatteryRequest"
+    },
+    "get_bt_info": {
+      "label": "Get Bluetooth Info",
+      "command_class": "commands.bexa.ftm_get_info.GetBluetoothInfo"
+    },
+    "get_tactile_info": {
+      "label": "Get Tactile Sensor Info",
+      "command_class": "commands.bexa.ftm_get_info.GetTactileInfo"
+    },
+    "get_haptic_info": {
+      "label": "Get Haptic Info",
+      "command_class": "commands.bexa.ftm_get_info.GetHapticInfo"
+    },
+    "get_coulomb_info": {
+      "label": "Get Coulomb Counter Info",
+      "command_class": "commands.bexa.ftm_get_info.GetCoulombInfo"
+    },
+    "tactile_read": {
+      "label": "Tactile Sensor Read",
+      "command_class": "commands.bexa.ftm_sensor.TactileSensorRead"
+    },
+    "coulomb_read": {
+      "label": "Coulomb Counter Read",
+      "command_class": "commands.bexa.ftm_sensor.CoulombCounterRead"
+    },
+    "imu_read": {
+      "label": "IMU Read",
+      "command_class": "commands.bexa.ftm_sensor.ImuRead"
+    },
+    "charging_info": {
+      "label": "Charging Info",
+      "command_class": "commands.bexa.ftm_sensor.ChargingInfo"
+    },
+    "haptic_vibrating": {
+      "label": "Haptic Vibrating",
+      "command_class": "commands.bexa.ftm_actuator.HapticVibrating",
+      "type": "manual"
+    },
+    "led_action_rgb": {
+      "label": "LED Action RGB",
+      "command_class": "commands.bexa.ftm_actuator.LedActionRgb",
+      "type": "manual"
+    },
+    "led_power_rgb": {
+      "label": "LED Power RGB",
+      "command_class": "commands.bexa.ftm_actuator.LedPowerRgb",
+      "type": "manual"
+    },
+    "lightbar_pulsing": {
+      "label": "Lightbar Pulsing",
+      "command_class": "commands.bexa.ftm_actuator.LightbarPulsing",
+      "type": "manual"
+    },
+    "buzzer_playing": {
+      "label": "Buzzer Playing",
+      "command_class": "commands.bexa.ftm_actuator.BuzzerPlaying",
+      "type": "manual"
+    },
+    "bt_rf_sig": {
+      "label": "Bluetooth RF Signal",
+      "command_class": "commands.bexa.ftm_system.BluetoothRfSig"
+    },
+    "stop": {
+      "label": "Stop Test",
+      "command_class": "commands.bexa.ftm_system.Stop"
+    },
+    "bt_burst": {
+      "label": "Bluetooth Burst (FCC)",
+      "command_class": "commands.bexa.ftm_system.BluetoothBurst",
+      "disabled": true
+    },
+    "watchdog_reset": {
+      "label": "Watchdog Reset",
+      "command_class": "commands.bexa.ftm_system.WatchdogReset",
+      "disabled": true
+    }
+  }
+}

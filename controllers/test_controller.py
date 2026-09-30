@@ -169,12 +169,12 @@ class TestController:
 
         threading.Thread(target=worker, daemon=True).start()
 
-    def run_all(self, rows: list, done_callback=None, scroll_fn=None):
+    def run_all(self, rows: list, done_callback=None):
         if self._seq_running:
             return
         self._stop_event.clear()
         threading.Thread(
-            target=self._seq_worker, args=(rows, done_callback, scroll_fn), daemon=True
+            target=self._seq_worker, args=(rows, done_callback), daemon=True
         ).start()
 
     def stop_now(self, rows: list):
@@ -255,7 +255,7 @@ class TestController:
     # Sequential runner
     # ------------------------------------------------------------------
 
-    def _seq_worker(self, rows: list, done_callback, scroll_fn=None):
+    def _seq_worker(self, rows: list, done_callback):
         self._seq_running = True
         last_row = None
 
@@ -268,16 +268,9 @@ class TestController:
             last_row    = row
             is_manual   = row.test_item.is_manual
 
-            if scroll_fn:
-                row.master.after(0, lambda r=row: scroll_fn(r))
-
             event = threading.Event()
-            row.master.after(
-                0,
-                lambda r=row, ev=event: self.run_test(
-                    r, done_callback=lambda _r, ev=ev: ev.set()
-                )
-            )
+            row.master.after(0, lambda r=row, ev=event:
+                self.run_test(r, done_callback=lambda _r, ev=ev: ev.set()))
 
             # Timeout per-step: ambil dari test_item (timeout_s), fallback ke
             # config workflow, fallback ke 600 detik (cukup untuk OTA ~3 menit+).

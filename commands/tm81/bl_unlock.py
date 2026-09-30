@@ -45,6 +45,8 @@ class BLUnlock(TM81Command):
     knock berhasil dihitung oleh firmware. Jika ada yang ACK, abort.
     """
 
+    RETRIES = 1   # tiap knock dihitung firmware; jangan dobel
+
     def execute(self) -> str:
         _log.debug(
             "  [BLUnlock] Memulai unlock sequence (%d knock, "

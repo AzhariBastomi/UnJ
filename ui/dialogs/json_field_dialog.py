@@ -406,7 +406,7 @@ class JsonFieldSettingsDialog(TouchPopupMixin, tk.Toplevel):
             var = tk.StringVar(value="" if current_val is None else str(current_val))
             ent = tk.Entry(card, textvariable=var, width=30,
                            bg=C["surface"], fg=C["text"], relief="flat",
-                           state="readonly",
+                           state="readonly", readonlybackground=C["surface"],
                            highlightthickness=1, highlightbackground=C["border"],
                            highlightcolor=C["running"],
                            font=("TkDefaultFont", fs("small")))
@@ -443,7 +443,7 @@ class JsonFieldSettingsDialog(TouchPopupMixin, tk.Toplevel):
             var = tk.StringVar(value="" if current_val is None else str(current_val))
             ent = tk.Entry(card, textvariable=var, width=30,
                            bg=C["surface"], fg=C["text"], relief="flat",
-                           state="readonly",
+                           state="readonly", readonlybackground=C["surface"],
                            highlightthickness=1, highlightbackground=C["border"],
                            highlightcolor=C["running"],
                            font=("TkDefaultFont", fs("small")))

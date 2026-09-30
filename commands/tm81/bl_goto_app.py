@@ -17,6 +17,8 @@ except ImportError:
     _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", "..", "lib"))
     from commands.tm81.base import TM81Command, CmdId
 
+from commands.tm81.bl_tools import is_ota_image_complete
+
 BOOT_REASON_NORMAL = 1
 _NO_FRAME          = 0xFFFF
 _CHUNK_SIZE        = 512
@@ -24,28 +26,34 @@ _CHUNK_SIZE        = 512
 
 class BLGotoApp(TM81Command):
 
+    # Jump/soft reset — jangan dikirim ulang otomatis kalau balasan hilang.
+    RETRIES = 1
+
     def execute(self) -> str:
         # ── Jump gate ──────────────────────────────────────────────────────
         # Query OTA progress dulu. Kalau image belum selesai, tolak jump
         # agar device tidak bootloop ke app yang tidak valid.
-        prog = self.xfer(CmdId.BL_GET_OTA_PROGRESS, timeout=2.0)
+        prog = self.xfer(CmdId.BL_GET_OTA_PROGRESS, timeout=2.0, retries=3)
         if prog.valid and len(prog.payload) >= 10:
             p        = prog.payload
             dev_size = int.from_bytes(p[0:4], "little")
             dev_last = int.from_bytes(p[8:10], "little")
 
-            if dev_size > 0 and dev_size < 0xFFFFFFFF and dev_last != _NO_FRAME:
+            # Sama dengan SWM OtaActivateImage.py: size sudah dideklarasikan
+            # (SET_RDY sudah erase region) tapi frame belum lengkap -> TOLAK.
+            # Termasuk last_frame = 0xFFFF (region sudah dihapus, belum ada
+            # frame sama sekali) — dulu kasus ini lolos dan bisa bikin brick.
+            if 0 < dev_size < 0xFFFFFFFF and not is_ota_image_complete(dev_size, dev_last, _CHUNK_SIZE):
                 frames_needed  = (dev_size + _CHUNK_SIZE - 1) // _CHUNK_SIZE
-                frames_written = dev_last + 1
-                if frames_written < frames_needed:
-                    msg = (
-                        f"NG:REFUSE — OTA image belum selesai: "
-                        f"frame {frames_written}/{frames_needed} ditulis "
-                        f"(size={dev_size} B). "
-                        f"Selesaikan upload dulu dengan BLWriteFirmware."
-                    )
-                    _log.warning("  [BLGotoApp] jump gate REFUSE: %s", msg)
-                    return msg
+                frames_written = 0 if dev_last == _NO_FRAME else dev_last + 1
+                msg = (
+                    f"NG:REFUSE — OTA image belum selesai: "
+                    f"frame {frames_written}/{frames_needed} ditulis "
+                    f"(size={dev_size} B). "
+                    f"Selesaikan upload dulu dengan BLWriteFirmware."
+                )
+                _log.warning("  [BLGotoApp] jump gate REFUSE: %s", msg)
+                return msg
 
             _log.debug("  [BLGotoApp] jump gate OK — image lengkap atau EEPROM bersih")
         else:

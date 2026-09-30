@@ -13,27 +13,24 @@ _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "lib"))
 
-import json
 from test_base import TestBase
 
 _ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 
-def _load_voltage_json() -> dict:
-    """Baca semua voltage config dari commands/voltage/config/*.json."""
+def _load_voltage_entries() -> list:
+    """Semua titik ukur voltage lewat loaders.voltage (BUKAN scan *.json
+    sendiri) -- daftarnya sekarang dari voltage.feature + _steps.json, lihat
+    lib/loaders/voltage.py."""
     import sys as _s
     _lib = os.path.join(_ROOT, "lib")
     if _lib not in _s.path: _s.path.insert(0, _lib)
-    volt_dir = os.path.join(_ROOT, "commands", "voltage", "config")
-    voltages = []
-    try:
-        for fname in sorted(os.listdir(volt_dir)):
-            if fname.endswith(".json"):
-                with open(os.path.join(volt_dir, fname)) as f:
-                    voltages.append(json.load(f))
-    except Exception:
-        pass
-    return {"voltages": voltages}
+    from loaders.voltage import get_voltage_sources
+    return [
+        {"name": s._name, "label": s._label, "command": s._command,
+         "description": s._desc}
+        for s in get_voltage_sources()
+    ]
 
 
 class VoltageTest(TestBase):
@@ -56,14 +53,10 @@ if __name__ == "__main__":
         print("Usage: python voltage_test.py <name>  (misal: 3v3, 1v8)")
         sys.exit(1)
 
-    try:
-        data = _load_voltage_json()
-    except FileNotFoundError:
-        print("voltage.json tidak ditemukan di json/"); sys.exit(1)
-
-    entry = next((v for v in data.get("voltages", []) if v.get("name") == entry_name), None)
+    entries = _load_voltage_entries()
+    entry = next((v for v in entries if v.get("name") == entry_name), None)
     if not entry:
-        names = [v.get("name") for v in data.get("voltages", [])]
+        names = [v.get("name") for v in entries]
         print(f"Entry {entry_name!r} tidak ditemukan. Tersedia: {names}")
         sys.exit(1)
 

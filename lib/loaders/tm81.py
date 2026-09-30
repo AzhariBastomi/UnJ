@@ -5,8 +5,12 @@ TM81OtaTestSource    : flow OTA flash (auto-detected via "fw_version" di root JS
 TM81GenericTestSource: source reusable untuk semua JSON lain di folder config/ (auto-discovered).
 
 Auto-discovery:
-  Semua *.json di commands/tm81/config/ — kecuali commissioning.json —
-  otomatis di-load tanpa edit Python apapun.
+  Semua *.json di commands/tm81/config/ — kecuali commissioning.json dan
+  file berawalan "_" (mis. _steps.json) — otomatis di-load tanpa edit
+  Python apapun.
+
+  Suite boleh memakai format "tests" (entry lengkap) atau "steps" (ringkas,
+  merujuk _steps.json). Resolusinya ada di JsonTestSource.entries().
 
   Deteksi class:
     "fw_version" di root JSON → TM81OtaTestSource (fw_path resolve + progress_cb).
@@ -32,8 +36,10 @@ _log = logging.getLogger(__name__)
 
 _TM81_CONFIG_DIR    = os.path.join(_ROOT, "commands", "tm81", "config")
 _COMMISSIONING_JSON = os.path.join(_TM81_CONFIG_DIR, "commissioning.json")
+_TM81_STEPS_JSON    = os.path.join(_TM81_CONFIG_DIR, "_steps.json")
 
-# Hanya commissioning.json yang di-skip (bukan test)
+# Bukan suite: commissioning.json, plus semua file berawalan "_"
+# (_steps.json dan file pendukung lain di masa depan).
 _TM81_MANAGED_JSONS = {"commissioning.json"}
 
 # ---------------------------------------------------------------------------
@@ -460,6 +466,7 @@ class TM81OtaTestSource(JsonTestSource):
     """
 
     entity_label = "TM81 Flash step"
+    steps_json   = _TM81_STEPS_JSON
 
     def __init__(self, json_path: str):
         self.json_path = json_path
@@ -517,6 +524,10 @@ class TM81OtaTestSource(JsonTestSource):
                 desc += f"\nFile: {os.path.basename(fw_path)} ({size_kb:.1f} KB)"
 
         params = {"fw_path": fw_path, "chunk_size": chunk_size, "fill_with_ff": fill_ff}
+        # Suite OTA Bootloader (prefix tm81_ota_bl) mengirim image BL — batas
+        # ukurannya 32 KB, bukan 160 KB seperti App (lihat bl_tools.fw_max_size).
+        if "ota_bl" in (self.prefix or ""):
+            params["region"] = "bl"
         params.update(entry.get("params", {}))
 
         _cmd_cls, _load_err = self.resolve_command_class(class_path)
@@ -558,6 +569,8 @@ class TM81GenericTestSource(JsonTestSource):
     Contoh: tm81_test.json punya "prefix": "tm81".
     """
 
+    steps_json = _TM81_STEPS_JSON
+
     def __init__(self, json_path: str):
         stem              = os.path.splitext(os.path.basename(json_path))[0]
         self.json_path    = json_path
@@ -579,6 +592,12 @@ class TM81GenericTestSource(JsonTestSource):
         static_params = entry.get("params", {})
         cmd_prefix    = self.prefix.upper()
         _expect       = entry.get("expect")
+
+        post_wait             = float(entry.get("post_wait_s", 0.0))
+        post_popup            = entry.get("post_popup", "")
+        post_popup_s          = int(entry.get("post_popup_s", 0))
+        post_popup2           = entry.get("post_popup2", "")
+        post_popup_phase2_pct = int(entry.get("post_popup_phase2_pct", 90))
 
         _cmd_cls, _load_err = self.resolve_command_class(cmd_class)
         _ch340 = logging.getLogger("serial_comm.ch340")
@@ -610,6 +629,24 @@ class TM81GenericTestSource(JsonTestSource):
                     _ch340.debug("[TM81 PARSED] OK  %s", r[3:].split("\n")[0].strip())
                 elif r.upper() != "OK":
                     _ch340.debug("[TM81 PARSED] %s", r.split("\n")[0])
+
+                # post_wait_s / post_popup — sama mekanismenya dengan
+                # _TM81FlashStep (loaders/tm81.py), cuma dipasang di sini juga
+                # supaya suite non-OTA (Gherkin lean/JSON generik) bisa pakai
+                # popup countdown yang SAMA (mis. "bl to app") tanpa perlu
+                # bikin mekanisme baru.
+                _ok = (r.upper() == "OK" or r.upper().startswith("OK:"))
+                if _ok and post_popup and post_popup_s > 0:
+                    import time as _t
+                    from loaders.context import show_countdown_popup
+                    show_countdown_popup(post_popup, post_popup_s,
+                                         message2=post_popup2,
+                                         phase2_pct=post_popup_phase2_pct)
+                    _t.sleep(post_popup_s)
+                if _ok and post_wait > 0:
+                    import time as _t
+                    _t.sleep(post_wait)
+
                 return result
             except Exception as e:
                 _log.exception("[%s] %s exception:", cmd_prefix, label)
@@ -644,7 +681,7 @@ class TM81GenericTestSource(JsonTestSource):
             item.popup_extra_fn = _make_expect_popup_fn(_expect)
         if name == "user_get_config_post_set":
             item.popup_extra_fn = _user_get_config_popup_extra
-        if name == "lora_get_config":
+        if name in ("lora_get_config", "lora_get_config_post_reset"):
             item.popup_extra_fn = _lora_get_config_popup_extra
         if name == "user_last_usage":
             item.popup_extra_fn = _last_usage_popup_extra
@@ -687,17 +724,65 @@ def _detect_source_class(json_path: str) -> type:
 
 
 def _scan_tm81_sources() -> list:
-    """Scan folder config, buat source object untuk setiap JSON non-managed."""
+    """Scan folder config, buat source object untuk setiap JSON non-managed.
+
+    Selain source JSON biasa, tiap suite yang punya file features/<stem>.feature
+    yang cocok juga dapat satu source Gherkin TAMBAHAN (baris terpisah di Add
+    Test, di posisi yang sama) -- urutan/seleksi step-nya dibaca dari .feature,
+    isi tiap step tetap dari JSON asli. Lihat loaders/gherkin_common.py.
+    """
     sources = []
     try:
         for fname in sorted(os.listdir(_TM81_CONFIG_DIR)):
-            if not fname.endswith(".json") or fname in _TM81_MANAGED_JSONS:
+            if (not fname.endswith(".json")
+                    or fname.startswith("_")
+                    or fname in _TM81_MANAGED_JSONS):
                 continue
             json_path = os.path.join(_TM81_CONFIG_DIR, fname)
+            try:
+                with open(json_path, encoding="utf-8") as f:
+                    _cfg_check = json.load(f)
+            except Exception:
+                _cfg_check = {}
+            if not (_cfg_check.get("steps") or _cfg_check.get("tests")):
+                # JSON pengaturan kecil (mis. cuma "fw_version"/"_dialog",
+                # tanpa daftar step) -- itu suite OTA "ringkas", daftar
+                # step-nya dari <stem>.feature di folder yang sama, sudah
+                # ditangani lean scan di bawah (scan_lean_sources ota_only).
+                continue
             cls = _detect_source_class(json_path)
             sources.append(cls(json_path))
     except OSError:
         pass
+
+    # Kalau ada features/<stem>.feature yang cocok, GANTI source JSON di
+    # posisi yang sama (bukan baris tambahan) -- urutan/seleksi step-nya
+    # dibaca dari .feature, isi tiap step tetap dari JSON. Prefix & label
+    # tidak berubah, jadi baris di Add Test tetap satu per suite.
+    try:
+        from loaders.gherkin_common import wrap_if_feature_exists
+        for _i, _s in enumerate(sources):
+            _g = wrap_if_feature_exists(_s)
+            if _g is not None:
+                sources[_i] = _g
+    except Exception as e:
+        _log.warning("Gagal load Gherkin TM81 sources: %s", e)
+
+    # Suite "ringkas" -- HANYA file .feature, tanpa JSON suite sama sekali
+    # (lihat loaders/gherkin_lean.py). Berguna kalau suite barunya cuma
+    # kombinasi step yang sudah ada, tanpa butuh override apa pun.
+    try:
+        from loaders.gherkin_lean import scan_lean_sources
+        sources.extend(scan_lean_sources(_TM81_CONFIG_DIR, TM81GenericTestSource, _TM81_STEPS_JSON))
+        # Suite OTA ringkas -- JSON-nya diperkecil jadi cuma fw_version +
+        # _dialog (masih dibaca/ditulis tombol "OTA Settings" di GUI apa
+        # adanya), daftar/urutan step-nya dari .feature. Lihat
+        # loaders/gherkin_lean.py:scan_lean_sources(ota_only=True).
+        sources.extend(scan_lean_sources(_TM81_CONFIG_DIR, TM81OtaTestSource, _TM81_STEPS_JSON,
+                                          ota_only=True))
+    except Exception as e:
+        _log.warning("Gagal load lean TM81 sources: %s", e)
+
     return sources
 
 
