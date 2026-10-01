@@ -56,12 +56,16 @@ def _pcolor(p: int) -> str:
 
 
 class TestRowWidget:
-    def __init__(self, master, test_item, index, scale, on_run_request):
+    def __init__(self, master, test_item, index, scale, on_run_request,
+                 on_running=None):
         self.master         = master
         self.test_item      = test_item
         self.index          = index
         self.scale          = scale
         self.on_run_request = on_run_request
+        # Dipanggil tiap row ini masuk state Running — dipakai TestListPanel
+        # untuk auto-scroll ke test yang sedang berjalan. None = tidak aktif.
+        self.on_running     = on_running
         self._detail_text   = ""
         self._pct           = 0
         # Strategy object — TestRowWidget tidak perlu tahu jenis test_item konkretnya,
@@ -210,6 +214,11 @@ class TestRowWidget:
         self._update_badge()
         self._status_lbl.config(text="Running…", fg=COLORS["running"])
         self._behavior.set_running(self)
+        if self.on_running is not None:
+            try:
+                self.on_running(self)
+            except Exception:
+                pass        # auto-scroll gagal tidak boleh menggagalkan test
 
     def show_retry(self, attempt: int, total: int):
         """Update status text jadi 'Retry n/total...' — dipakai controller saat

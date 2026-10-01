@@ -15,7 +15,7 @@ from tkinter import ttk
 
 from config import COLORS
 from ui.test_row_widget import TestRowWidget
-from ui.scroll_util import bind_scroll
+from ui.scroll_util import bind_scroll, scroll_into_view
 
 
 class TestListPanel(tk.Frame):
@@ -74,6 +74,7 @@ class TestListPanel(tk.Frame):
                 self._inner, item, i,
                 scale=self.scale,
                 on_run_request=self._on_run_request,
+                on_running=self.scroll_to_row,
             )
             self._rows.append(row)
         self._inner.update_idletasks()
@@ -87,6 +88,7 @@ class TestListPanel(tk.Frame):
             self._inner, item, index,
             scale=self.scale,
             on_run_request=self._on_run_request,
+            on_running=self.scroll_to_row,
         )
         self._rows.append(row)
         self._inner.update_idletasks()
@@ -102,6 +104,20 @@ class TestListPanel(tk.Frame):
     def refresh_validations(self):
         for row in self._rows:
             row.refresh_validation()
+
+    def scroll_to_row(self, row) -> None:
+        """Bawa `row` ke dalam viewport kalau sedang kepotong.
+
+        Dipasang sebagai `on_running` tiap TestRowWidget, jadi saat sequence
+        Start jalan, list otomatis mengikuti test yang sedang berjalan.
+        Dijadwalkan lewat after(0) supaya geometry row (progress bar dll yang
+        baru muncul saat Running) sudah final waktu posisinya dihitung.
+        """
+        frame = getattr(row, "frame", None)
+        if frame is None:
+            return
+        self.after(0, lambda: scroll_into_view(
+            self._canvas, frame, margin=int(10 * self.scale)))
 
     def _on_run_request(self, row: TestRowWidget):
         self.controller.run_test(row)

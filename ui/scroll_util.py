@@ -166,6 +166,59 @@ def bind_touch_scroll(canvas: tk.Canvas, area: tk.Misc = None):
     top.bind("<ButtonRelease-1>", _release, add="+")
 
 
+# ══════════════════════════════════════════════════════════════════════════
+# Auto-scroll: bawa satu widget ke dalam area yang terlihat
+# ══════════════════════════════════════════════════════════════════════════
+
+
+def scroll_into_view(canvas: tk.Canvas, widget: tk.Misc, margin: int = 10) -> bool:
+    """Geser `canvas` secukupnya supaya `widget` terlihat seluruhnya.
+
+    Dipakai saat sequence Start berjalan: tiap test yang mulai jalan dibawa ke
+    dalam viewport, jadi user tidak perlu scroll manual mengikuti progres.
+
+    Sengaja "secukupnya" (bukan selalu di tengah): kalau widget sudah terlihat
+    penuh, tidak ada geseran sama sekali — list tidak lompat-lompat tiap step.
+
+    margin : jarak sisa (px) yang disisakan di tepi atas/bawah viewport.
+
+    Return True kalau posisi scroll benar-benar diubah.
+    """
+    try:
+        if not canvas.winfo_exists() or not widget.winfo_exists():
+            return False
+        canvas.update_idletasks()
+
+        region = canvas.bbox("all")
+        if not region:
+            return False
+        top_content = region[1]
+        content_h   = region[3] - region[1]
+        view_h      = canvas.winfo_height()
+        if content_h <= view_h or content_h <= 0 or view_h <= 1:
+            return False            # semuanya sudah kelihatan
+
+        # Posisi widget dalam koordinat konten canvas
+        y_widget = (widget.winfo_rooty() - canvas.winfo_rooty()) + canvas.canvasy(0)
+        h_widget = widget.winfo_height()
+
+        view_top    = canvas.canvasy(0)
+        view_bottom = view_top + view_h
+
+        if y_widget - margin < view_top:
+            new_top = y_widget - margin                       # kepotong di atas
+        elif y_widget + h_widget + margin > view_bottom:
+            new_top = y_widget + h_widget + margin - view_h    # kepotong di bawah
+        else:
+            return False            # sudah terlihat penuh, jangan diganggu
+
+        new_top = max(top_content, min(new_top, top_content + content_h - view_h))
+        canvas.yview_moveto((new_top - top_content) / content_h)
+        return True
+    except Exception:
+        return False
+
+
 def bind_scroll(canvas: tk.Canvas, step: int = 3, area: tk.Misc = None):
     """Aktifkan roda mouse + drag jari sekaligus."""
     bind_mousewheel(canvas, step=step, area=area)
