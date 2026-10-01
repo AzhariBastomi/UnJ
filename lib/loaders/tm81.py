@@ -257,7 +257,7 @@ def _lora_get_config_popup_extra(popup, detail_text: str, scale: float,
     if jm is not None:
         mappings["Join Mode"] = _fmt_mode(jm)
 
-    eui = cfg.get("lora_set_dev_eui", {}).get("dev_eui")
+    eui = get_context("dev_eui") or cfg.get("lora_set_dev_eui", {}).get("dev_eui")
     if eui:
         mappings["DevEUI"] = _fmt_hex(eui)
 

@@ -1,7 +1,10 @@
 """commands/tm81/lora_set_dev_eui.py — Set DevEUI (CMD 0x0F)
 
-Default DevEUI dapat di-override lewat params di tm81_test.json:
-    "params": {"dev_eui": "0080E1010101010A"}
+Urutan prioritas DevEUI:
+    1. context "dev_eui" — hasil scan barcode format "SN;DEVEUI"
+    2. params di tm81_test.json / commissioning.json
+       "params": {"dev_eui": "0080E1010101010A"}
+    3. DEFAULT_DEV_EUI
 """
 
 import logging
@@ -21,7 +24,13 @@ class LoraSetDevEui(TM81Command):
     def __init__(self, conn=None, timeout=None, params=None):
         super().__init__(conn, timeout)
         p = params or {}
-        raw = p.get("dev_eui", self.DEFAULT_DEV_EUI.hex())
+        # DevEUI hasil scan barcode ("SN;DEVEUI") menang atas nilai commissioning.
+        try:
+            from loaders.context import get_context
+        except ImportError:
+            def get_context(_k, _d=""):
+                return _d
+        raw = get_context("dev_eui") or p.get("dev_eui", self.DEFAULT_DEV_EUI.hex())
         raw = str(raw).strip().replace(":", "").replace(" ", "")
         try:
             self._dev_eui = bytes.fromhex(raw) if raw else b""

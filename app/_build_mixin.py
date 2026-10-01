@@ -102,8 +102,12 @@ class BuildMixin:
             highlightcolor=COLORS["running"],
         )
         _dev_entry.pack(side="left", padx=6, ipady=3)
+        self._dev_entry = _dev_entry
         _dev_entry.bind("<FocusOut>", lambda _: self._on_device_change())
-        _dev_entry.bind("<Return>",   lambda _: self._on_device_change())
+        # Barcode scanner mengakhiri scan dengan Enter atau Tab -> langsung Start.
+        _dev_entry.bind("<Return>",    self._on_sn_submit)
+        _dev_entry.bind("<KP_Enter>",  self._on_sn_submit)
+        _dev_entry.bind("<Tab>",       self._on_sn_submit)
         _dev_entry.bind("<Control-a>", lambda e: (
             e.widget.select_range(0, "end"), e.widget.icursor("end"), "break"
         ))
@@ -207,10 +211,84 @@ class BuildMixin:
 
     def _deferred_sn_update(self):
         """Dipanggil 150ms setelah user berhenti mengetik SN."""
+        if self._split_barcode():
+            return  # _device_var diubah -> trace menjadwalkan ulang
         test_loader.update_context({"device_id": self._device_var.get()})
         self._update_start_btn()
         if hasattr(self, "_list_panel"):
             self._list_panel.refresh_validations()
+
+    # ------------------------------------------------------------------
+    # Barcode "SN;DEVEUI"
+    # ------------------------------------------------------------------
+
+    def _split_barcode(self) -> bool:
+        """Pecah isi field SN kalau berformat "SN;DEVEUI".
+
+        Barcode produksi berisi dua bagian dipisah ';'. SN tetap tinggal di
+        field, DevEUI dikirim ke context supaya dipakai step Set DevEUI
+        (lihat commands/tm81/lora_set_dev_eui.py).
+        Return True kalau field ikut diubah.
+        """
+        raw = self._device_var.get()
+        if ";" not in raw:
+            return False
+        sn, _, eui = raw.partition(";")
+        sn  = sn.strip()
+        eui = eui.strip().replace(":", "").replace(" ", "").upper()
+        if not eui:
+            return False  # scan belum selesai, ';' baru masuk
+        test_loader.update_context({"dev_eui": eui})
+        log.info("[scan] SN=%r DevEUI=%s", sn, eui)
+        self._device_var.set(sn)
+        return True
+
+    # ------------------------------------------------------------------
+    # Fokus / reset field SN
+    # ------------------------------------------------------------------
+
+    def _focus_sn(self):
+        """Taruh kursor di field SN dan select isinya, siap di-scan."""
+        try:
+            self._dev_entry.focus_force()
+            self._dev_entry.select_range(0, "end")
+            self._dev_entry.icursor("end")
+        except Exception:
+            pass
+
+    def _reset_sn_input(self):
+        """Kosongkan SN + DevEUI hasil scan, lalu balik fokus ke field SN."""
+        try:
+            self._device_var.set("")
+            test_loader.update_context({"device_id": "", "dev_eui": ""})
+        except Exception:
+            pass
+        self._focus_sn()
+
+    def _on_sn_submit(self, _event=None):
+        """Enter/Tab di field SN — biasanya dikirim barcode scanner.
+
+        Pecah barcode dulu, lalu langsung Start kalau tombol Start memang
+        sudah boleh ditekan. Kalau belum (test list kosong, dll.) cuma
+        siapkan sesi DB seperti perilaku lama.
+        """
+        self._split_barcode()
+        if self._validation_after_id:
+            self.after_cancel(self._validation_after_id)
+            self._validation_after_id = None
+        self._deferred_sn_update()
+
+        can_start = (
+            bool(self._device_var.get().strip())
+            and not self._controller.is_seq_running()
+            and str(self._toggle_btn["state"]) == "normal"
+        )
+        if can_start:
+            log.info("[scan] auto-start sequence")
+            self.after(50, self._do_start)
+        else:
+            self._on_device_change()
+        return "break"
 
     def _on_device_change(self, *_):
         """FocusOut / Return — siapkan DB session baru (background thread)."""

@@ -100,6 +100,9 @@ class RunMixin:
             if hasattr(self, "_status_lbl"):
                 self._status_lbl.config(fg=COLORS["ok"])
             self._finalize_db_session("OK")
+            # Siap unit berikutnya: field SN dikosongkan dan fokus balik ke sana.
+            # Kalau ada NG field SN sengaja dibiarkan supaya bisa di-resume.
+            self.after(1200, self._reset_sn_input)
         else:
             self._resume_sn = ""
             self._status_var.set("Selesai")

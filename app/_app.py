@@ -86,6 +86,8 @@ class App(BuildMixin, RunMixin, DbMixin, StateMixin, SettingsMixin, TestMgmtMixi
         self._refresh_dynamic_buttons()
         self.after(500, self._auto_connect)
         self.after(200, self._maybe_open_debug_console)
+        # Operator langsung bisa scan tanpa klik field dulu.
+        self.after(300, self._focus_sn)
 
     # ------------------------------------------------------------------
     # Window helpers
