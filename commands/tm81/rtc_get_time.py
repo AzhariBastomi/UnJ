@@ -26,11 +26,22 @@ class RtcGetTime(TM81Command):
         if len(d) < 6:
             return f"NG:payload terlalu pendek ({len(d)} bytes)"
 
+        # Tampilkan byte apa adanya seperti SWM (RtcGetTime.py) — TANPA offset.
+        # rtc_set_time menulis year sebagai (tahun - 2000), jadi 2026 -> 26.
+        # Tahun 4-digit hasil turunan ditaruh dalam kurung supaya jelas mana
+        # data asli dari device dan mana yang dihitung di sini.
         yr, month, day, hr, mn, sec = d[0], d[1], d[2], d[3], d[4], d[5]
-        year = 1900 + yr  # device kirim offset dari 1900 (mis. 126 → 2026)
-        self._time_str = f"{year}-{month:02d}-{day:02d} {hr:02d}:{mn:02d}:{sec:02d}"
+        self._time_str = f"{yr:02d}-{month:02d}-{day:02d} {hr:02d}:{mn:02d}:{sec:02d}"
+        detail = "\n".join([
+            f"Year   : {yr} ({2000 + yr})",
+            f"Month  : {month}",
+            f"Day    : {day}",
+            f"Hour   : {hr}",
+            f"Minute : {mn}",
+            f"Second : {sec}",
+        ])
         _log.debug(f"  RTC Time: {self._time_str}")
-        return f"OK:{self._time_str}"
+        return f"OK:{self._time_str}\n{detail}"
 
     def get_time(self) -> str:
         return getattr(self, "_time_str", "")

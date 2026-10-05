@@ -150,6 +150,13 @@
       "label": "Get Last Submit Time",
       "command_class": "commands.tm81.lora_get_last_submit_time.LoraGetLastSubmitTime"
     },
+    "lora_set_adr": {
+      "label": "Set LoRa ADR",
+      "command_class": "commands.tm81.lora_set_adr.LoraSetAdr",
+      "validate": {
+        "adr": 1
+      }
+    },
     "lora_set_app_key": {
       "label": "Set AppKey",
       "command_class": "commands.tm81.lora_set_app_key.LoraSetAppKey",

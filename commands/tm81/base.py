@@ -62,6 +62,7 @@ class CmdId:
     TEST_SOFT_RESET         = 0x22
     GET_LAST_SUBMIT_TIME    = 0x23
     RESET_BATTERY_CONFIG    = 0x24
+    SET_LORA_ADR            = 0x25
     BL_SET_RDY              = 100
     BL_FW_DATA              = 101
     BL_GOTO_APP             = 102
