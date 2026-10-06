@@ -1,6 +1,8 @@
 """
 commands/tm81/lora_get_config.py — Get LoRaWAN Config (CMD 0x16)
-Response payload (57 bytes): full LoRaWAN configuration.
+Response payload (58 bytes): full LoRaWAN configuration.
+Byte ke-58 (index 57) = ADR, baru ada di firmware yang mendukung Set ADR
+(CMD 0x25) — dibaca defensif, kalau payload cuma 57 byte ADR tidak ditampilkan.
 
 Selain menampilkan config, step ini ikut memverifikasi dua hal yang jadi
 fail-signature commissioning di firmware >= v1.5.1 (SOP sec.10):
@@ -50,7 +52,7 @@ class LoraGetConfig(TM81Command):
         if len(d) < 10:
             return f"NG:payload terlalu pendek ({len(d)} bytes)"
 
-        # Layout (57 bytes): class(1)+mode(1)+devaddr(4)+deveui(8)+joineui(8)+appkey(16)+nwkkey(16)+txpower(1)+dr(1)+rx1delay(1)
+        # Layout (58 bytes): class(1)+mode(1)+devaddr(4)+deveui(8)+joineui(8)+appkey(16)+nwkkey(16)+txpower(1)+dr(1)+rx1delay(1)+adr(1)
         class_map    = {0: "A", 1: "B", 2: "C"}
         mode_map     = {0: "NONE", 1: "ABP", 2: "OTAA"}
 
@@ -65,6 +67,9 @@ class LoraGetConfig(TM81Command):
             "tx_power":      d[54] if len(d) > 54 else "N/A",
             "data_rate":     d[55] if len(d) > 55 else "N/A",
             "rx1_delay":     d[56] if len(d) > 56 else "N/A",
+            # SWM LoraGetConfig.py juga baca byte ini secara opsional
+            "adr":           ("ON" if d[57] == 1 else "OFF" if d[57] == 0
+                              else f"unknown({d[57]})") if len(d) > 57 else "N/A",
         }
 
         self._config = config
@@ -84,7 +89,8 @@ class LoraGetConfig(TM81Command):
         for p in problems:
             _log.warning("  [lora_cfg] %s", p)
 
-        summary = f"Class {config['lora_class']} | {config['join_mode']} | DR{config['data_rate']} | TxPwr {config['tx_power']}"
+        summary = (f"Class {config['lora_class']} | {config['join_mode']} | DR{config['data_rate']}"
+                   f" | TxPwr {config['tx_power']} | ADR {config['adr']}")
         detail = "\n".join([
             f"Class      : {config['lora_class']}",
             f"Join Mode  : {config['join_mode']}",
@@ -96,6 +102,7 @@ class LoraGetConfig(TM81Command):
             f"TX Power   : {config['tx_power']}",
             f"Data Rate  : {config['data_rate']}",
             f"RX1 Delay  : {config['rx1_delay']}",
+            f"ADR        : {config['adr']}",
         ] + (["", "Commissioning check"] + [f"  - {p}" for p in problems]
              if problems else []))
 

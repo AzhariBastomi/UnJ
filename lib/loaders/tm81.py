@@ -265,6 +265,10 @@ def _lora_get_config_popup_extra(popup, detail_text: str, scale: float,
     if jeui:
         mappings["JoinEUI"] = _fmt_hex(jeui)
 
+    adr = cfg.get("lora_set_adr", {}).get("adr")
+    if adr is not None:
+        mappings["ADR"] = "ON" if adr else "OFF"
+
     lc = cfg.get("lora_set_config", {})
     if "tx_power" in lc:
         mappings["TX Power"] = str(lc["tx_power"])
