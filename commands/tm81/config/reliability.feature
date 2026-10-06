@@ -1,6 +1,6 @@
 # Suite TM81 Reliability -- reproduksi bug dari SWM firmware reliability review.
 # Isi tiap step (command_class) dari _steps.json. Simpan -> otomatis muncul di Add Test.
-# prefix: tm81
+# prefix: tm81_reliability
 #
 # URUTAN: non-destruktif dulu (F12, F10), destruktif terakhir (F01, F02) karena
 # keduanya bisa memicu HardFault -> IWDG reset (~40 dtk device hang lalu boot).

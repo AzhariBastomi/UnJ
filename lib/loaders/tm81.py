@@ -787,6 +787,19 @@ def _scan_tm81_sources() -> list:
     except Exception as e:
         _log.warning("Gagal load lean TM81 sources: %s", e)
 
+    # Dua suite dengan prefix sama = yang kedua tidak pernah ketemu
+    # (_get_source_by_prefix ambil yang pertama), dan test tersimpan di
+    # tasks.json milik suite yang kalah gagal di-load tanpa sebab yang jelas.
+    seen = {}
+    for src in sources:
+        other = seen.get(src.prefix)
+        if other:
+            _log.warning("Prefix '%s' dipakai dua suite: %s dan %s -- yang kedua "
+                         "tidak akan bisa di-load. Ganti '# prefix:' salah satunya.",
+                         src.prefix, os.path.basename(other), os.path.basename(src.json_path))
+        else:
+            seen[src.prefix] = src.json_path
+
     return sources
 
 
