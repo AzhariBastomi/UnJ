@@ -16,8 +16,10 @@ Response payload (20 bytes):
   [19]   Is Last Uplink Success
   [20]   Is Last Uplink in Retry      (firmware baru, payload 22 byte)
   [21]   Last Uplink Retry Count      (firmware baru, payload 22 byte)
+  [22]   Init Status bitmask          (firmware baru, payload 23 byte)
+  [23-26] Remaining Power Recovery Time, detik (firmware baru, payload 27 byte)
 
-Firmware lama mengirim 20 byte — byte 20-21 hanya dibaca kalau ada.
+Firmware lama mengirim 20 byte — byte 20 ke atas hanya dibaca kalau ada.
 Referensi: SWM_Test_Scripts/Src/DevGetInfo.py
 """
 
@@ -66,6 +68,13 @@ class DevGetInfo(TM81Command):
         if has_retry:
             info["last_uplink_in_retry"]    = bool(d[20])
             info["last_uplink_retry_count"] = d[21]
+        has_init = len(d) >= 23
+        if has_init:
+            info["init_status"]        = d[22]
+            info["init_failed_steps"]  = self._init_failed_steps(d[22])
+        has_recovery = len(d) >= 27
+        if has_recovery:
+            info["recovery_remaining_min"] = int.from_bytes(d[23:27], "little") / 60
 
         self._last_payload = d
         self._last_info = info
@@ -98,9 +107,23 @@ class DevGetInfo(TM81Command):
         ] + ([
             f"Last Uplink Retry  : {info['last_uplink_in_retry']}",
             f"Retry Count        : {info['last_uplink_retry_count']}",
-        ] if has_retry else []))
+        ] if has_retry else []) + ([
+            f"Init Status        : 0x{info['init_status']:02X}"
+            + (" (OK)" if info["init_status"] == 0
+               else f" (GAGAL: {', '.join(info['init_failed_steps'])})"),
+        ] if has_init else []) + ([
+            f"Power Recovery Left: {info['recovery_remaining_min']:.2f} menit",
+        ] if has_recovery else []))
 
         return f"OK:{summary}\n{detail}"
+
+    # Bit 0..7 init_status — urutan sama dengan firmware (lihat DevGetInfo.py SWM)
+    INIT_STEPS = ["modules", "user_cfg", "lora_cfg", "lora_keys",
+                  "serial", "profiling", "boot_cfg", "persist"]
+
+    @classmethod
+    def _init_failed_steps(cls, status: int) -> list:
+        return [n for i, n in enumerate(cls.INIT_STEPS) if status & (1 << i)]
 
     def get_info(self) -> dict:
         """Return dict info setelah execute() dipanggil."""
@@ -108,6 +131,10 @@ class DevGetInfo(TM81Command):
 
 # ── Standalone test ──────────────────────────────────────────────────────────
 if __name__ == "__main__":
+    assert DevGetInfo._init_failed_steps(0) == []
+    assert DevGetInfo._init_failed_steps(0x09) == ["modules", "lora_keys"]
+    assert DevGetInfo._init_failed_steps(0xFF) == DevGetInfo.INIT_STEPS
+
     import sys as _sys, os as _os
     _sys.path.insert(0, _os.path.join(_os.path.dirname(__file__), "..", "..", "lib"))
     import serial_manager as sm

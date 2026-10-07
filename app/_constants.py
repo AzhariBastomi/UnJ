@@ -1,3 +1,3 @@
 """Konstanta bersama yang dipakai beberapa mixin."""
 
-APP_VERSION = "1.4.2"
+APP_VERSION = "1.5.0"
