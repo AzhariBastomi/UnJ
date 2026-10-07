@@ -113,7 +113,10 @@ class DevGetInfo(TM81Command):
                else f" (GAGAL: {', '.join(info['init_failed_steps'])})"),
         ] if has_init else []) + ([
             f"Power Recovery Left: {info['recovery_remaining_min']:.2f} menit",
-        ] if has_recovery else []))
+        ] if has_recovery else []) + [
+            f"Payload Len        : {len(d)} byte"
+            + ("" if has_recovery else "  <- < 27, field power recovery tidak dikirim device"),
+        ])
 
         return f"OK:{summary}\n{detail}"
 
