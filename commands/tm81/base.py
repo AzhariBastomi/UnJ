@@ -63,6 +63,7 @@ class CmdId:
     GET_LAST_SUBMIT_TIME    = 0x23
     RESET_BATTERY_CONFIG    = 0x24
     SET_LORA_ADR            = 0x25
+    FORCE_JOIN_LORA         = 0x26
     BL_SET_RDY              = 100
     BL_FW_DATA              = 101
     BL_GOTO_APP             = 102
@@ -72,6 +73,8 @@ class CmdId:
     BL_GET_SESSION          = 108
     USR_FACTORY_RESET       = 109
     EEPROM_PAGE_READ        = 110
+    SET_CFLIST              = 112
+    GET_CFLIST              = 113
 
 
 class TM81Command:
@@ -85,6 +88,11 @@ class TM81Command:
     # Command yang tidak boleh terkirim dua kali (reset, jump, knock, dst)
     # override RETRIES = 1 di class-nya.
     RETRIES = 3
+    # True = balasan 1 byte adalah DATA, bukan status. GET_CFLIST (113) balas
+    # 1 byte mask yang nilainya bisa kebetulan 0x11/0x0F, dan tanpa ini
+    # _normalize_framed_status() akan membacanya sebagai ACK/NAK lalu
+    # membuang payload-nya (mask 0x0F = ch2..ch5 -> salah dibaca NAK).
+    DATA_BYTE_REPLY = False
 
     def __init__(self, conn: str = None, timeout: float = None, params=None,
                  retries: int = None):
@@ -171,7 +179,8 @@ class TM81Command:
             if pr is None:
                 pr = ParseResult(raw=b"", payload=b"", valid=False, error="Timeout")
 
-        pr = self._normalize_framed_status(pr)
+        if not self.DATA_BYTE_REPLY:
+            pr = self._normalize_framed_status(pr)
 
         # Log hasil parsing ke serial_comm logger agar tampil di CH340 debug window
         _log = getattr(comm._parser, "_log", None)

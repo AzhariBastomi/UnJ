@@ -22,6 +22,7 @@ Feature: TM81
     And lora_set_join_mode: Set LoRa join mode (0=None, 1=ABP, 2=OTAA)
     And lora_set_dev_class: Set LoRa device class (0=A, 1=B, 2=C)
     And lora_set_config: Set LoRa TX power, data rate, RX1 delay
+    And lora_set_cflist: Set mask added channel AS923-2 (dipakai saat join berikutnya)
     And rtc_set: Sinkronisasi RTC device ke waktu PC
     And get_id: Baca Device ID dari memori - validasi set_id
     And dev_info: Baca info device: baterai, sensor, LoRa status
@@ -34,6 +35,8 @@ Feature: TM81
       | Timezone | @user_set_config.timezone |
       | Msg type | @user_set_config.msg_type |
     And lora_get_config: Baca konfigurasi LoRaWAN - validasi semua lora_set_*, update commissioning
+    And lora_get_cflist: Baca mask added channel - validasi lora_set_cflist
+    And lora_force_join: Paksa device join LoRaWAN sekarang (hanya jalan kalau activation=1)
     And lora_force_send: Paksa device kirim uplink LoRaWAN sekarang
     And lora_last_submit: Baca waktu terakhir device mengirim uplink
     And sensor_do_get_config: Trigger satu siklus pembacaan sensor

@@ -76,6 +76,11 @@
                 ]
               },
               {
+                "key": "lora_set_cflist.mask",
+                "label": "CF List Mask (bit0=ch2 .. bit5=ch7)",
+                "type": "number"
+              },
+              {
                 "key": "lora_set_config.tx_power",
                 "label": "TX Power",
                 "type": "number"
@@ -166,6 +171,10 @@
     "_doc": "0=ADR OFF, 1=ADR ON",
     "adr": 1
   },
+  "lora_set_cflist": {
+    "_doc": "Mask added-channel AS923-2, bit0=ch2 921.2 .. bit5=ch7 922.6. 63 = semua ON",
+    "mask": 63
+  },
   "lora_set_dev_eui": {
     "_doc": "8 bytes hex, unik per device",
     "dev_eui": "434C32332609000D"
@@ -195,7 +204,7 @@
   "user_set_config": {
     "_doc": "counter_res/submit_id/timezone/msg_type",
     "activation": 1,
-    "initial_counter": 32407,
+    "initial_counter": 9990,
     "counter_res": 1,
     "alarm": 0,
     "submit_id": 2,

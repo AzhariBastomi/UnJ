@@ -137,6 +137,15 @@
       "label": "LoRa Force Send",
       "command_class": "commands.tm81.lora_force_send.LoraForceSend"
     },
+    "lora_force_join": {
+      "label": "Force Join LoRa",
+      "command_class": "commands.tm81.lora_force_join.LoraForceJoin",
+      "no_retry": true
+    },
+    "lora_get_cflist": {
+      "label": "Get CF List",
+      "command_class": "commands.tm81.lora_cflist.LoraGetCFList"
+    },
     "lora_get_config": {
       "label": "Get LoRa Config",
       "command_class": "commands.tm81.lora_get_config.LoraGetConfig"
@@ -163,6 +172,10 @@
       "validate": {
         "app_key": 32
       }
+    },
+    "lora_set_cflist": {
+      "label": "Set CF List",
+      "command_class": "commands.tm81.lora_cflist.LoraSetCFList"
     },
     "lora_set_config": {
       "label": "Set LoRa Config",
