@@ -77,8 +77,17 @@
               },
               {
                 "key": "lora_set_cflist.mask",
-                "label": "CF List Mask (bit0=ch2 .. bit5=ch7)",
-                "type": "number"
+                "label": "CF List Channel",
+                "type": "bitmask",
+                "per_row": 3,
+                "options": [
+                  "ch2 921.2",
+                  "ch3 921.8",
+                  "ch4 922.0",
+                  "ch5 922.2",
+                  "ch6 922.4",
+                  "ch7 922.6"
+                ]
               },
               {
                 "key": "lora_set_config.tx_power",

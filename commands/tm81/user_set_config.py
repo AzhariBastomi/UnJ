@@ -1,8 +1,11 @@
 """commands/tm81/user_set_config.py — Set User Config (CMD 0x07)
 
-Kirim:
+Kirim (11 byte):
   activation(1B) + initial_counter(4B) + counter_res(1B) +
-  alarm(1B) + submit_id(1B) + timezone(1B) + msg_type(1B)
+  alarm(2B, u16 LE) + submit_id(1B) + timezone(1B) + msg_type(1B)
+
+alarm naik 1B -> 2B mengikuti firmware baru; frame 10B lama ditolak firmware
+yang mengharapkan 11B. Referensi: SWM_Test_Scripts/Src/UserSetConfig.py
 
 Defaults: activated, 0, RES_10L, 0, FIFTEEN_MINS, UTC+7, CONFIRMED
 """
@@ -37,7 +40,7 @@ class UserSetConfig(TM81Command):
             self._activation.to_bytes(1, "little")
             + self._counter.to_bytes(4, "little")
             + self._counter_res.to_bytes(1, "little")
-            + self._alarm.to_bytes(1, "little")
+            + self._alarm.to_bytes(2, "little")
             + self._submit_id.to_bytes(1, "little")
             + self._timezone.to_bytes(1, "little", signed=True)   # signed: support UTC negatif
             + self._msg_type.to_bytes(1, "little")
@@ -78,7 +81,7 @@ class UserSetConfig(TM81Command):
             f"Activation   : {act}",
             f"Init counter : {self._counter}",
             f"Counter res  : {res}",
-            f"Alarm        : {self._alarm:#04x}",
+            f"Alarm        : {self._alarm:#06x}",
             f"Submit rate  : {submit}",
             f"Timezone     : UTC{tz_sign}{self._timezone}",
             f"Msg type     : {msg}",

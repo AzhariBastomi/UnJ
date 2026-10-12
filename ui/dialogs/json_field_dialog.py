@@ -400,6 +400,36 @@ class JsonFieldSettingsDialog(TouchPopupMixin, tk.Toplevel):
             self._save_actions.append(_action_select)
 
         # ------------------------------------------------------------------
+        # bitmask — satu checkbox per bit, disimpan sebagai integer mask
+        # (bit0 = options[0]). Dipakai CF List supaya operator tidak perlu
+        # menghitung angka mask sendiri.
+        # ------------------------------------------------------------------
+        elif ftype == "bitmask":
+            options = fld.get("options", [])
+            per_row = fld.get("per_row", 3)
+            mask    = current_val if isinstance(current_val, int) else 0
+
+            holder = tk.Frame(card, bg=C["card"])
+            holder.grid(row=row, column=1, columnspan=2, padx=(0, 8), pady=3, sticky="w")
+
+            bit_vars = []
+            for i, opt in enumerate(options):
+                v = tk.IntVar(value=1 if mask & (1 << i) else 0)
+                tk.Checkbutton(holder, text=opt, variable=v,
+                               bg=C["card"], fg=C["text"], selectcolor=C["surface"],
+                               activebackground=C["card"], activeforeground=C["text"],
+                               highlightthickness=0, relief="flat", cursor="hand2",
+                               font=("TkDefaultFont", fs("small")),
+                               ).grid(row=i // per_row, column=i % per_row,
+                                      sticky="w", padx=(0, 10), pady=1)
+                bit_vars.append(v)
+
+            def _action_bitmask(k=key, vs=bit_vars):
+                _set_dotpath(self._data, k,
+                             sum(1 << i for i, v in enumerate(vs) if v.get()))
+            self._save_actions.append(_action_bitmask)
+
+        # ------------------------------------------------------------------
         # file — Entry readonly + Browse (any file)
         # ------------------------------------------------------------------
         elif ftype == "file":
