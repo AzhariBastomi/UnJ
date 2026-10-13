@@ -98,11 +98,6 @@
                 "key": "lora_set_config.data_rate",
                 "label": "Data Rate",
                 "type": "number"
-              },
-              {
-                "key": "lora_set_config.rx1_delay",
-                "label": "RX1 Delay (s)",
-                "type": "number"
               }
             ]
           }
@@ -170,15 +165,15 @@
   },
   "lora_set_join_mode": {
     "_doc": "0=None,1=ABP,2=OTAA",
-    "join_mode": 2
+    "join_mode": 1
   },
   "lora_set_dev_class": {
     "_doc": "0=ClassA,1=ClassB,2=ClassC",
-    "dev_class": 0
+    "dev_class": 1
   },
   "lora_set_adr": {
     "_doc": "0=ADR OFF, 1=ADR ON",
-    "adr": 1
+    "adr": 0
   },
   "lora_set_cflist": {
     "_doc": "Mask added-channel AS923-2, bit0=ch2 921.2 .. bit5=ch7 922.6. 63 = semua ON",
@@ -190,7 +185,7 @@
   },
   "lora_set_join_eui": {
     "_doc": "8 bytes hex, sama per batch",
-    "join_eui": "0000000000000000"
+    "join_eui": "FFFFFFFFFFFFFFFF"
   },
   "lora_set_app_key": {
     "_doc": "16 bytes hex, OTAA",
@@ -205,10 +200,9 @@
     "dev_addr": "0x0100000B"
   },
   "lora_set_config": {
-    "_doc": "tx_power/data_rate/rx1_delay",
+    "_doc": "tx_power/data_rate",
     "tx_power": 0,
-    "data_rate": 2,
-    "rx1_delay": 2
+    "data_rate": 2
   },
   "user_set_config": {
     "_doc": "counter_res/submit_id/timezone/msg_type",

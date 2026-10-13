@@ -274,8 +274,6 @@ def _lora_get_config_popup_extra(popup, detail_text: str, scale: float,
         mappings["TX Power"] = str(lc["tx_power"])
     if "data_rate" in lc:
         mappings["Data Rate"] = str(lc["data_rate"])
-    if "rx1_delay" in lc:
-        mappings["RX1 Delay"] = str(lc["rx1_delay"])
 
     if not mappings:
         return

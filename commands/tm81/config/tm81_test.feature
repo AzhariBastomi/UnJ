@@ -21,7 +21,7 @@ Feature: TM81
     And lora_set_dev_addr: Set DevAddr ABP (4 bytes)
     And lora_set_join_mode: Set LoRa join mode (0=None, 1=ABP, 2=OTAA)
     And lora_set_dev_class: Set LoRa device class (0=A, 1=B, 2=C)
-    And lora_set_config: Set LoRa TX power, data rate, RX1 delay
+    And lora_set_config: Set LoRa TX power + data rate
     And lora_set_cflist: Set mask added channel AS923-2 (dipakai saat join berikutnya)
     And rtc_set: Sinkronisasi RTC device ke waktu PC
     And get_id: Baca Device ID dari memori - validasi set_id

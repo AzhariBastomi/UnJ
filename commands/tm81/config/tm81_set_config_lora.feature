@@ -13,7 +13,8 @@ Feature: TM81 Set Config LoRa
     And lora_set_dev_addr: Set DevAddr ABP (4 bytes)
     And lora_set_join_mode: Set LoRa join mode (0=None, 1=ABP, 2=OTAA)
     And lora_set_dev_class: Set LoRa device class (0=A, 1=B, 2=C)
-    And lora_set_config: Set LoRa TX power, data rate, RX1 delay
+    And lora_set_config: Set LoRa TX power + data rate
+    And lora_set_adr: Set ADR ON/OFF (CMD 0x25) - nilainya dari OTA/Commissioning Settings
     And lora_set_cflist: Set mask added channel AS923-2 (dipakai saat join berikutnya)
     And lora_get_config: Baca konfigurasi LoRaWAN - validasi semua lora_set_*
     And lora_get_cflist: Baca mask added channel - validasi lora_set_cflist
