@@ -180,6 +180,13 @@ class BLWriteFirmwareV2(TM81Command):
 
         Retry beberapa kali karena IrDA yang baru reconnect butuh waktu stabilisasi.
         """
+        if self._region == "bl":
+            # Device masih di App mode (OTA Bootloader). Cmd 106 itu command
+            # bootloader; App tidak menanganinya, jadi 4x retry = ~11s dead time
+            # sebelum SET_RDY. Resume juga tidak relevan untuk image BL 32 KB.
+            _log.debug("  region=bl → skip OTA progress (device di App mode)")
+            return (False, 0, 0, _NO_FRAME)
+
         for attempt in range(retries):
             if attempt > 0:
                 _log.debug("  OTA progress retry %d/%d ...", attempt + 1, retries - 1)
@@ -210,6 +217,13 @@ class BLWriteFirmwareV2(TM81Command):
 
     def _bl_clear_ota(self) -> str:
         """Kirim BL_OTA_CLEAR (cmd 107) untuk reset metadata OTA di EEPROM."""
+        if self._region == "bl":
+            # Sama: cmd 107 command bootloader. Di App mode balasannya tidak
+            # bisa dipercaya, dan SET_RDY yang nyusul 0 ms sesudah ACK-nya bisa
+            # hilang saat App masih sibuk nulis EEPROM. Lewati saja.
+            _log.debug("  region=bl → skip BL_OTA_CLEAR (device di App mode)")
+            return "OK"
+
         result = self.xfer(CmdId.BL_OTA_CLEAR, timeout=3.0)
         if not result.valid and result.error not in ("ACK",):
             _log.debug(

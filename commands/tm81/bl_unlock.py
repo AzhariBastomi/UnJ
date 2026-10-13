@@ -48,6 +48,22 @@ class BLUnlock(TM81Command):
     RETRIES = 1   # tiap knock dihitung firmware; jangan dobel
 
     def execute(self) -> str:
+        # Guard di firmware butuh 5 knock BERURUTAN. Keepalive ping (cmd 0x00,
+        # tiap 5s) tidak di-pause di step ini, jadi kalau ping nyelip di antara
+        # knock, hitungan guard reset dan unlock gagal tanpa jejak di log
+        # (ping di-mute lewat keepalive.log_tx_rx=false). Itu sumber "kadang
+        # berhasil kadang gagal" di BL_SET_RDY sesudahnya.
+        try:
+            from controllers.keepalive import pause_global, resume_global
+        except ImportError:
+            pause_global = resume_global = lambda: None
+        pause_global()
+        try:
+            return self._knock()
+        finally:
+            resume_global()
+
+    def _knock(self) -> str:
         _log.debug(
             "  [BLUnlock] Memulai unlock sequence (%d knock, "
             "semua NAK = normal)",
