@@ -169,7 +169,7 @@
   },
   "lora_set_dev_class": {
     "_doc": "0=ClassA,1=ClassB,2=ClassC",
-    "dev_class": 1
+    "dev_class": 2
   },
   "lora_set_adr": {
     "_doc": "0=ADR OFF, 1=ADR ON",
@@ -202,7 +202,7 @@
   "lora_set_config": {
     "_doc": "tx_power/data_rate",
     "tx_power": 0,
-    "data_rate": 2
+    "data_rate": 1
   },
   "user_set_config": {
     "_doc": "counter_res/submit_id/timezone/msg_type",

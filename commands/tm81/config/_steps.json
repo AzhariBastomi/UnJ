@@ -182,7 +182,6 @@
       "command_class": "commands.tm81.lora_set_config.LoraSetConfig",
       "validate": {
         "data_rate": 1,
-        "rx1_delay": 1,
         "tx_power": 1
       }
     },
